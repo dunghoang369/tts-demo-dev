@@ -1,0 +1,99 @@
+Firebase Setup Instructions for TTS News Upload
+================================================
+
+The Firebase integration has been successfully implemented. Follow these steps to complete the setup:
+
+## What Has Been Done
+
+1. ✅ Added firebase-admin==6.5.0 to requirements.txt
+2. ✅ Installed firebase-admin package in virtual environment
+3. ✅ Added Firebase imports to summarize_articles.py
+4. ✅ Created init_firebase() function to initialize Firebase Admin SDK
+5. ✅ Created upload_to_firestore() function to upload news with metadata
+6. ✅ Updated main execution block to:
+   - Initialize Firebase at startup
+   - Fetch news from get_news API
+   - Process each article (extract, summarize, categorize)
+   - Upload all items to Firestore collection
+   - Removed debug code (pdb.set_trace())
+7. ✅ Added firebase-credentials.json to .gitignore
+
+## Next Steps - Firebase Project Setup
+
+### Step 1: Create Firebase Project
+1. Go to Firebase Console: https://console.firebase.google.com/
+2. Click "Add project" or select an existing project
+3. Follow the setup wizard to create your project
+
+### Step 2: Enable Firestore Database
+1. In your Firebase project, go to "Build" > "Firestore Database"
+2. Click "Create database"
+3. Choose production mode or test mode (test mode for development)
+4. Select a location for your database
+
+### Step 3: Generate Service Account Key
+1. Go to Project Settings (gear icon) > Service Accounts
+2. Click "Generate New Private Key"
+3. Click "Generate Key" - a JSON file will be downloaded
+4. Rename the downloaded file to: firebase-credentials.json
+5. Move it to the project root directory: /Users/dung.hoang2/dunghc/tts/
+
+### Step 4: Test the Integration
+Run the script to test:
+```bash
+cd /Users/dung.hoang2/dunghc/tts
+source venv/bin/activate
+python summarize_articles.py
+```
+
+## Data Structure in Firestore
+
+Collection: news_articles
+├── _metadata (document)
+│   ├── fetch_date: ISO timestamp of when data was fetched
+│   ├── total_items: Number of news items in this batch
+│   ├── news_type: Type of news (e.g., "thoi-su")
+│   └── timestamp: Server timestamp
+│
+└── {timestamp}_{hash} (document for each news item)
+    ├── title: Article title
+    ├── full_text: Full article content
+    ├── summary: Generated summary
+    ├── publish_time: Unix timestamp
+    ├── url: Article URL
+    ├── category: Auto-categorized (Breaking News, World News, etc.)
+    └── fetch_date: When this item was fetched
+
+## How It Works
+
+1. Script initializes Firebase connection using firebase-credentials.json
+2. Calls get_news API to fetch latest news articles
+3. For each article:
+   - Extracts and parses publish date/time
+   - Calls summarize API to generate summary
+   - Categorizes based on keywords (Breaking/World/Investment/Sport News)
+4. Uploads all processed items to Firestore collection "news_articles"
+5. Creates/updates _metadata document with batch information
+
+## Security Notes
+
+- firebase-credentials.json is in .gitignore (DO NOT commit to git)
+- Keep your service account key secure
+- Consider using environment variables for production
+- Set appropriate Firestore security rules in Firebase Console
+
+## Troubleshooting
+
+If you get "Failed to initialize Firebase":
+- Check that firebase-credentials.json exists in project root
+- Verify the JSON file is valid and not corrupted
+- Ensure you have internet connection
+
+If uploads fail:
+- Check Firestore is enabled in Firebase Console
+- Verify service account has necessary permissions
+- Check for network/firewall issues
+
+
+
+
