@@ -71,9 +71,21 @@ def init_firebase():
         return _db
 
     try:
-        # Try multiple paths for firebase credentials
-        import os
-
+        # Option 1: Try to load credentials from environment variable
+        firebase_creds_json = os.getenv("FIREBASE_CREDENTIALS_JSON")
+        
+        if firebase_creds_json:
+            # Parse JSON from environment variable
+            import json
+            cred_dict = json.loads(firebase_creds_json)
+            cred = credentials.Certificate(cred_dict)
+            firebase_admin.initialize_app(cred)
+            _db = firestore.client()
+            _firebase_initialized = True
+            logger.info("Firebase initialized successfully using environment variable")
+            return _db
+        
+        # Option 2: Fall back to file-based credentials (for local development)
         possible_paths = [
             "firebase-credentials.json",  # Current directory
             "../firebase-credentials.json",  # Parent directory (when running from api/)
@@ -90,7 +102,7 @@ def init_firebase():
 
         if not cred_path:
             raise FileNotFoundError(
-                "firebase-credentials.json not found in any expected location"
+                "Firebase credentials not found. Set FIREBASE_CREDENTIALS_JSON environment variable or place firebase-credentials.json file."
             )
 
         cred = credentials.Certificate(cred_path)

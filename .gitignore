@@ -46,5 +46,5 @@ backend/flask_session/
 # Firebase credentials
 firebase-credentials.json
 
-# md files
-*.md
+# Helper scripts output
+get-firebase-env.txt
