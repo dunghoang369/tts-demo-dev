@@ -11,7 +11,6 @@ import re
 import httpx
 import firebase_admin
 from firebase_admin import credentials, firestore
-from apscheduler.schedulers.background import BackgroundScheduler
 import logging
 
 # Configure logging
@@ -265,7 +264,9 @@ async def process_and_upload_news(news_type: str, limit: int = 5):
                         )
                         timestamp = int(date_time.timestamp())
                     except ValueError:
-                        logger.warning(f"Failed to parse date: {publish_date} {publish_time_str}")
+                        logger.warning(
+                            f"Failed to parse date: {publish_date} {publish_time_str}"
+                        )
                         timestamp = int(datetime.now().timestamp())
                 else:
                     timestamp = int(datetime.now().timestamp())
@@ -835,6 +836,85 @@ async def crawl_news(request: CrawlNewsRequest):
         )
 
 
+@app.get("/api/cron/crawl_news")
+async def cron_crawl_news():
+    """
+    Cron endpoint for automated news crawling.
+    Called by Vercel Cron Jobs.
+    """
+    try:
+        logger.info("Cron job triggered: crawl_news")
+        
+        details = []
+        total_processed = 0
+        fetch_date = datetime.now().isoformat()
+
+        # Process each category
+        for category in NEWS_CATEGORIES:
+            logger.info(f"Processing category: {category}")
+            result = await process_and_upload_news(category, 5)
+            details.append(result)
+            total_processed += result.get("uploaded", 0)
+
+        logger.info(f"Cron crawl completed. Total processed: {total_processed}")
+        
+        return {
+            "success": True,
+            "processed": total_processed,
+            "categories_processed": NEWS_CATEGORIES,
+            "fetch_date": fetch_date,
+            "details": details,
+        }
+
+    except Exception as e:
+        logger.error(f"Error in cron crawl_news: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Failed to crawl news", "message": str(e)},
+        )
+
+
+@app.get("/api/cron/cleanup")
+async def cron_cleanup():
+    """
+    Cron endpoint for automated cleanup of old articles.
+    Called by Vercel Cron Jobs.
+    """
+    try:
+        logger.info("Cron job triggered: cleanup")
+        
+        db = init_firebase()
+        if not db:
+            raise Exception("Failed to initialize Firebase")
+
+        collection_ref = db.collection("news_articles")
+        cutoff_date = datetime.now() - timedelta(days=7)
+        cutoff_timestamp = cutoff_date.timestamp()
+
+        docs = collection_ref.where("publish_time", "<", cutoff_timestamp).stream()
+
+        deleted_count = 0
+        for doc in docs:
+            if doc.id != "_metadata":
+                doc.reference.delete()
+                deleted_count += 1
+
+        logger.info(f"Cleanup completed. Deleted {deleted_count} old articles")
+        
+        return {
+            "success": True,
+            "deleted": deleted_count,
+            "cutoff_date": cutoff_date.isoformat(),
+        }
+
+    except Exception as e:
+        logger.error(f"Error in cron cleanup: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Failed to cleanup", "message": str(e)},
+        )
+
+
 @app.post("/api/cleanup_old_news")
 async def cleanup_old_news():
     """
@@ -950,161 +1030,6 @@ async def cleanup_old_news():
             status_code=500,
             content={"error": "Failed to cleanup old news", "message": str(e)},
         )
-
-
-# Background scheduler for automated news crawling
-scheduler = BackgroundScheduler()
-
-
-def scheduled_news_crawl():
-    """Background job to crawl news automatically"""
-    import asyncio
-
-    logger.info("Running scheduled news crawl...")
-
-    async def run_crawl():
-        try:
-            details = []
-            total_processed = 0
-
-            for category in NEWS_CATEGORIES:
-                result = await process_and_upload_news(category, 5)
-                details.append(result)
-                total_processed += result.get("uploaded", 0)
-
-            logger.info(
-                f"Scheduled crawl completed. Total processed: {total_processed}"
-            )
-            logger.info(f"Details: {details}")
-        except Exception as e:
-            logger.error(f"Error in scheduled crawl: {e}")
-
-    # Run the async function in the event loop
-    asyncio.run(run_crawl())
-
-
-def scheduled_cleanup():
-    """Background job to cleanup old articles automatically"""
-    logger.info("Running scheduled cleanup of old articles...")
-
-    try:
-        db = init_firebase()
-        collection_ref = db.collection("news_articles")
-
-        # Calculate 7 days ago timestamp
-        seven_days_ago = datetime.now() - timedelta(days=7)
-        seven_days_timestamp = seven_days_ago.timestamp()
-
-        # Query articles older than 7 days
-        query = collection_ref.order_by(
-            "publish_time", direction=firestore.Query.ASCENDING
-        )
-
-        docs = query.stream()
-        articles_to_delete = []
-
-        for doc in docs:
-            if doc.id == "_metadata":
-                continue
-
-            article_data = doc.to_dict()
-            publish_time = article_data.get("publish_time", 0)
-
-            if publish_time < seven_days_timestamp:
-                articles_to_delete.append(doc.id)
-
-        if not articles_to_delete:
-            logger.info("No articles to cleanup")
-            return
-
-        # Delete in batches
-        deleted_count = 0
-        batch_size = 500
-
-        for i in range(0, len(articles_to_delete), batch_size):
-            batch = db.batch()
-            batch_docs = articles_to_delete[i : i + batch_size]
-
-            for doc_id in batch_docs:
-                doc_ref = collection_ref.document(doc_id)
-                batch.delete(doc_ref)
-
-            batch.commit()
-            deleted_count += len(batch_docs)
-
-        # Update metadata
-        try:
-            metadata_ref = collection_ref.document("_metadata")
-            metadata_ref.update(
-                {
-                    "last_cleanup_time": datetime.now().isoformat(),
-                    "last_cleanup_deleted": deleted_count,
-                }
-            )
-        except Exception as e:
-            logger.warning(f"Could not update metadata: {e}")
-
-        logger.info(f"Scheduled cleanup completed. Deleted {deleted_count} articles")
-
-    except Exception as e:
-        logger.error(f"Error in scheduled cleanup: {e}")
-
-
-@app.on_event("startup")
-async def startup_event():
-    """Initialize scheduler on app startup"""
-    try:
-        from datetime import datetime, timedelta
-
-        # Schedule initial crawl 30 seconds after startup
-        initial_run_time = datetime.now() + timedelta(seconds=30)
-        scheduler.add_job(
-            scheduled_news_crawl,
-            "date",
-            run_date=initial_run_time,
-            id="initial_news_crawl",
-            replace_existing=True,
-        )
-        logger.info(
-            f"Initial news crawl scheduled for {initial_run_time.strftime('%H:%M:%S')}"
-        )
-
-        # Schedule daily crawl at 8:00 AM
-        scheduler.add_job(
-            scheduled_news_crawl,
-            "cron",
-            hour=8,
-            minute=00,
-            id="daily_news_crawl",
-            replace_existing=True,
-        )
-
-        # Schedule weekly cleanup on Sunday at 23:59 (11:59 PM)
-        scheduler.add_job(
-            scheduled_cleanup,
-            "cron",
-            day_of_week="sun",
-            hour=23,
-            minute=59,
-            id="weekly_cleanup",
-            replace_existing=True,
-        )
-
-        scheduler.start()
-        logger.info("Scheduler started. News will be crawled daily at 23:59")
-        logger.info("Weekly cleanup scheduled for Sunday at 2:00 AM")
-    except Exception as e:
-        logger.error(f"Failed to start scheduler: {e}")
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Shutdown scheduler gracefully"""
-    try:
-        scheduler.shutdown()
-        logger.info("Scheduler shutdown complete")
-    except Exception as e:
-        logger.error(f"Error shutting down scheduler: {e}")
 
 
 # Vercel serverless handler - Use ASGI interface directly
