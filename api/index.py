@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from jose import JWTError, jwt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 import os
 import re
@@ -179,11 +179,11 @@ def upload_to_firestore(db, news_items: List[dict], fetch_metadata: dict):
 
         # Store metadata document
         metadata_doc = {
-            "fetch_date": fetch_metadata.get("fetch_date", datetime.now().isoformat()),
+            "fetch_date": fetch_metadata.get("fetch_date", now_vietnam().isoformat()),
             "total_items": len(news_items),
             "news_type": fetch_metadata.get("news_type", "multiple"),
             "timestamp": firestore.SERVER_TIMESTAMP,
-            "last_crawl_time": datetime.now().isoformat(),
+            "last_crawl_time": now_vietnam().isoformat(),
         }
 
         # Add metadata document
@@ -232,7 +232,7 @@ async def process_and_upload_news(news_type: str, limit: int = 5):
             }
 
         news_items = []
-        fetch_date = datetime.now().isoformat()
+        fetch_date = now_vietnam().isoformat()
         failed_count = 0
 
         for article in articles:
@@ -263,14 +263,16 @@ async def process_and_upload_news(news_type: str, limit: int = 5):
                         date_time = datetime.strptime(
                             f"{publish_date} {publish_time_str}", "%d/%m/%Y %H:%M"
                         )
+                        # Add timezone info (Vietnam timezone)
+                        date_time = date_time.replace(tzinfo=UTC_PLUS_7)
                         timestamp = int(date_time.timestamp())
                     except ValueError:
                         logger.warning(
                             f"Failed to parse date: {publish_date} {publish_time_str}"
                         )
-                        timestamp = int(datetime.now().timestamp())
+                        timestamp = int(now_vietnam().timestamp())
                 else:
-                    timestamp = int(datetime.now().timestamp())
+                    timestamp = int(now_vietnam().timestamp())
 
                 # Summarize the article
                 summary = await summarize_text(full_text)
@@ -378,11 +380,23 @@ def get_most_recent_article_time(articles_dict):
                 if article.get("publish_time"):
                     if max_time is None or article["publish_time"] > max_time:
                         max_time = article["publish_time"]
-    
+
     # Convert timestamp to ISO format
     if max_time:
-        return datetime.fromtimestamp(max_time).isoformat()
-    return datetime.now().isoformat()  # Last resort fallback
+        return timestamp_to_vietnam(max_time).isoformat()
+    return now_vietnam().isoformat()  # Last resort fallback
+
+
+# Timezone helper
+UTC_PLUS_7 = timezone(timedelta(hours=7))
+
+def now_vietnam():
+    """Get current datetime in Vietnam timezone (UTC+7)"""
+    return datetime.now(UTC_PLUS_7)
+
+def timestamp_to_vietnam(timestamp):
+    """Convert Unix timestamp to Vietnam timezone datetime"""
+    return datetime.fromtimestamp(timestamp, UTC_PLUS_7)
 
 
 def validate_email_domain(email: str) -> bool:
@@ -610,10 +624,10 @@ async def get_latest_news():
         # Get the most recent article's publish_time for the date
         most_recent_timestamp = articles[0].get("publish_time", 0)
         if most_recent_timestamp:
-            date_obj = datetime.fromtimestamp(most_recent_timestamp)
+            date_obj = timestamp_to_vietnam(most_recent_timestamp)
             formatted_date = date_obj.strftime("%d/%m/%Y")
         else:
-            formatted_date = datetime.now().strftime("%d/%m/%Y")
+            formatted_date = now_vietnam().strftime("%d/%m/%Y")
 
         # Merge all summaries into one string
         merged_content = ""
@@ -696,7 +710,7 @@ async def get_news_by_categories():
                 continue
 
             # Format date
-            date_obj = datetime.fromtimestamp(publish_time)
+            date_obj = timestamp_to_vietnam(publish_time)
             formatted_date = date_obj.strftime("%d/%m/%Y")
 
             # Initialize nested structure
@@ -791,13 +805,19 @@ async def get_news_by_categories():
                     result["last_updated"] = last_crawl
                 else:
                     # Fallback: use most recent article's publish_time
-                    result["last_updated"] = get_most_recent_article_time(articles_by_category_and_date)
+                    result["last_updated"] = get_most_recent_article_time(
+                        articles_by_category_and_date
+                    )
             else:
                 # No metadata yet, use most recent article's publish_time
-                result["last_updated"] = get_most_recent_article_time(articles_by_category_and_date)
+                result["last_updated"] = get_most_recent_article_time(
+                    articles_by_category_and_date
+                )
         except Exception as e:
             logger.error(f"Error fetching metadata: {e}")
-            result["last_updated"] = get_most_recent_article_time(articles_by_category_and_date)
+            result["last_updated"] = get_most_recent_article_time(
+                articles_by_category_and_date
+            )
 
         return JSONResponse(content=result)
 
@@ -826,7 +846,7 @@ async def crawl_news(request: CrawlNewsRequest):
 
         details = []
         total_processed = 0
-        fetch_date = datetime.now().isoformat()
+        fetch_date = now_vietnam().isoformat()
 
         # Process each category
         for category in categories:
@@ -865,7 +885,7 @@ async def cron_crawl_news():
 
         details = []
         total_processed = 0
-        fetch_date = datetime.now().isoformat()
+        fetch_date = now_vietnam().isoformat()
 
         # Process each category
         for category in NEWS_CATEGORIES:
@@ -1020,7 +1040,7 @@ async def cleanup_old_news():
             metadata_ref = collection_ref.document("_metadata")
             metadata_ref.update(
                 {
-                    "last_cleanup_time": datetime.now().isoformat(),
+                    "last_cleanup_time": now_vietnam().isoformat(),
                     "last_cleanup_deleted": deleted_count,
                 }
             )
