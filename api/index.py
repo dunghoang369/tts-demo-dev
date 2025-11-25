@@ -183,6 +183,7 @@ def upload_to_firestore(db, news_items: List[dict], fetch_metadata: dict):
             "total_items": len(news_items),
             "news_type": fetch_metadata.get("news_type", "multiple"),
             "timestamp": firestore.SERVER_TIMESTAMP,
+            "last_crawl_time": datetime.now().isoformat(),
         }
 
         # Add metadata document
@@ -368,6 +369,22 @@ class CrawlNewsResponse(BaseModel):
 
 
 # Helper functions
+def get_most_recent_article_time(articles_dict):
+    """Extract the most recent publish_time from articles"""
+    max_time = None
+    for category_data in articles_dict.values():
+        for date_group in category_data.values():
+            for article in date_group:
+                if article.get("publish_time"):
+                    if max_time is None or article["publish_time"] > max_time:
+                        max_time = article["publish_time"]
+    
+    # Convert timestamp to ISO format
+    if max_time:
+        return datetime.fromtimestamp(max_time).isoformat()
+    return datetime.now().isoformat()  # Last resort fallback
+
+
 def validate_email_domain(email: str) -> bool:
     """Validate that email belongs to allowed domain"""
     return "@" in email and email.endswith(f"@{ALLOWED_DOMAIN}")
@@ -771,15 +788,16 @@ async def get_news_by_categories():
                 metadata = metadata_doc.to_dict()
                 last_crawl = metadata.get("last_crawl_time")
                 if last_crawl:
-                    # Convert to ISO format string
                     result["last_updated"] = last_crawl
                 else:
-                    result["last_updated"] = datetime.now().isoformat()
+                    # Fallback: use most recent article's publish_time
+                    result["last_updated"] = get_most_recent_article_time(articles_by_category_and_date)
             else:
-                result["last_updated"] = datetime.now().isoformat()
+                # No metadata yet, use most recent article's publish_time
+                result["last_updated"] = get_most_recent_article_time(articles_by_category_and_date)
         except Exception as e:
             logger.error(f"Error fetching metadata: {e}")
-            result["last_updated"] = datetime.now().isoformat()
+            result["last_updated"] = get_most_recent_article_time(articles_by_category_and_date)
 
         return JSONResponse(content=result)
 
@@ -844,7 +862,7 @@ async def cron_crawl_news():
     """
     try:
         logger.info("Cron job triggered: crawl_news")
-        
+
         details = []
         total_processed = 0
         fetch_date = datetime.now().isoformat()
@@ -857,7 +875,7 @@ async def cron_crawl_news():
             total_processed += result.get("uploaded", 0)
 
         logger.info(f"Cron crawl completed. Total processed: {total_processed}")
-        
+
         return {
             "success": True,
             "processed": total_processed,
@@ -882,7 +900,7 @@ async def cron_cleanup():
     """
     try:
         logger.info("Cron job triggered: cleanup")
-        
+
         db = init_firebase()
         if not db:
             raise Exception("Failed to initialize Firebase")
@@ -900,7 +918,7 @@ async def cron_cleanup():
                 deleted_count += 1
 
         logger.info(f"Cleanup completed. Deleted {deleted_count} old articles")
-        
+
         return {
             "success": True,
             "deleted": deleted_count,
