@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from jose import JWTError, jwt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 import os
 import re
@@ -610,7 +610,7 @@ async def get_latest_news():
         # Get the most recent article's publish_time for the date
         most_recent_timestamp = articles[0].get("publish_time", 0)
         if most_recent_timestamp:
-            date_obj = datetime.fromtimestamp(most_recent_timestamp)
+            date_obj = datetime.fromtimestamp(most_recent_timestamp, tz=timezone.utc)
             formatted_date = date_obj.strftime("%d/%m/%Y")
         else:
             formatted_date = datetime.now().strftime("%d/%m/%Y")
@@ -696,7 +696,7 @@ async def get_news_by_categories():
                 continue
 
             # Format date
-            date_obj = datetime.fromtimestamp(publish_time)
+            date_obj = datetime.fromtimestamp(publish_time, tz=timezone.utc)
             formatted_date = date_obj.strftime("%d/%m/%Y")
 
             # Initialize nested structure
