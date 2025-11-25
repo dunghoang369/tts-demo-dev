@@ -1051,23 +1051,23 @@ async def startup_event():
             f"Initial news crawl scheduled for {initial_run_time.strftime('%H:%M:%S')}"
         )
 
-        # Schedule daily crawl at 23:59 (11:59 PM)
+        # Schedule daily crawl at 8:00 AM
         scheduler.add_job(
             scheduled_news_crawl,
             "cron",
-            hour=23,
-            minute=59,
+            hour=8,
+            minute=00,
             id="daily_news_crawl",
             replace_existing=True,
         )
 
-        # Schedule weekly cleanup on Sunday at 2:00 AM
+        # Schedule weekly cleanup on Sunday at 23:59 (11:59 PM)
         scheduler.add_job(
             scheduled_cleanup,
             "cron",
             day_of_week="sun",
-            hour=2,
-            minute=0,
+            hour=23,
+            minute=59,
             id="weekly_cleanup",
             replace_existing=True,
         )
