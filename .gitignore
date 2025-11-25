@@ -48,3 +48,6 @@ firebase-credentials.json
 
 # Helper scripts output
 get-firebase-env.txt
+
+# md files
+*.md

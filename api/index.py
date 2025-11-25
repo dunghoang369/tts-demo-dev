@@ -73,10 +73,11 @@ def init_firebase():
     try:
         # Option 1: Try to load credentials from environment variable
         firebase_creds_json = os.getenv("FIREBASE_CREDENTIALS_JSON")
-        
+
         if firebase_creds_json:
             # Parse JSON from environment variable
             import json
+
             cred_dict = json.loads(firebase_creds_json)
             cred = credentials.Certificate(cred_dict)
             firebase_admin.initialize_app(cred)
@@ -84,7 +85,7 @@ def init_firebase():
             _firebase_initialized = True
             logger.info("Firebase initialized successfully using environment variable")
             return _db
-        
+
         # Option 2: Fall back to file-based credentials (for local development)
         possible_paths = [
             "firebase-credentials.json",  # Current directory
