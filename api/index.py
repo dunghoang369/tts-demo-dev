@@ -9,7 +9,6 @@ from typing import Optional, List
 import os
 import re
 import httpx
-import pandas as pd
 import firebase_admin
 from firebase_admin import credentials, firestore
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -260,8 +259,14 @@ async def process_and_upload_news(news_type: str, limit: int = 5):
 
                 # Convert to timestamp
                 if publish_date and publish_time_str:
-                    date_time = pd.to_datetime(f"{publish_date} {publish_time_str}")
-                    timestamp = int(date_time.timestamp())
+                    try:
+                        date_time = datetime.strptime(
+                            f"{publish_date} {publish_time_str}", "%d/%m/%Y %H:%M"
+                        )
+                        timestamp = int(date_time.timestamp())
+                    except ValueError:
+                        logger.warning(f"Failed to parse date: {publish_date} {publish_time_str}")
+                        timestamp = int(datetime.now().timestamp())
                 else:
                     timestamp = int(datetime.now().timestamp())
 
