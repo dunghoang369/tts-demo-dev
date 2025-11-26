@@ -149,7 +149,7 @@ async def get_news(news_type: str, limit: int = 5):
 async def summarize_text(full_text: str):
     """Call the summarization API to get a summary of the text"""
     try:
-        async with httpx.AsyncClient(timeout=300.0) as client:
+        async with httpx.AsyncClient(timeout=600.0) as client:
             response = await client.post(
                 SUMMARIZE_API_URL,
                 headers={
@@ -261,7 +261,7 @@ async def process_and_upload_news(news_type: str, limit: int = 5):
                 if publish_date and publish_time_str:
                     try:
                         date_time = datetime.strptime(
-                            f"{publish_date} {publish_time_str}", "%d/%m/%Y %H:%M"
+                            f"{publish_date} {publish_time_str}", "%Y-%m-%d %H:%M"
                         )
                         timestamp = int(date_time.timestamp())
                     except ValueError:
@@ -378,7 +378,7 @@ def get_most_recent_article_time(articles_dict):
                 if article.get("publish_time"):
                     if max_time is None or article["publish_time"] > max_time:
                         max_time = article["publish_time"]
-    
+
     # Convert timestamp to ISO format
     if max_time:
         return datetime.fromtimestamp(max_time).isoformat()
@@ -791,13 +791,19 @@ async def get_news_by_categories():
                     result["last_updated"] = last_crawl
                 else:
                     # Fallback: use most recent article's publish_time
-                    result["last_updated"] = get_most_recent_article_time(articles_by_category_and_date)
+                    result["last_updated"] = get_most_recent_article_time(
+                        articles_by_category_and_date
+                    )
             else:
                 # No metadata yet, use most recent article's publish_time
-                result["last_updated"] = get_most_recent_article_time(articles_by_category_and_date)
+                result["last_updated"] = get_most_recent_article_time(
+                    articles_by_category_and_date
+                )
         except Exception as e:
             logger.error(f"Error fetching metadata: {e}")
-            result["last_updated"] = get_most_recent_article_time(articles_by_category_and_date)
+            result["last_updated"] = get_most_recent_article_time(
+                articles_by_category_and_date
+            )
 
         return JSONResponse(content=result)
 
