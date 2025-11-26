@@ -547,7 +547,7 @@ async def tts_synthesize(request: Request):
         API_URL = "http://115.79.192.192:19977/invocations"
         API_KEY = "zNBVyiatKn5eTvC2CEvDg1msgOCHrTZ55zZ0qfsu"
 
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=600.0) as client:
             response = await client.post(
                 API_URL,
                 json=body,
@@ -567,9 +567,23 @@ async def tts_synthesize(request: Request):
             # Return the JSON response from TTS API
             return JSONResponse(content=response.json())
 
-    except Exception as e:
+    except httpx.TimeoutException as e:
+        logger.error(f"TTS API timeout: {e}")
         return JSONResponse(
-            status_code=500, content={"error": "Proxy error", "message": str(e)}
+            status_code=504,
+            content={"error": "TTS API timeout", "message": "Request took too long"}
+        )
+    except httpx.HTTPError as e:
+        logger.error(f"TTS HTTP error: {e}")
+        return JSONResponse(
+            status_code=502,
+            content={"error": "TTS API connection error", "message": str(e)}
+        )
+    except Exception as e:
+        logger.error(f"TTS proxy error: {type(e).__name__}: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Proxy error", "message": f"{type(e).__name__}: {str(e)}"}
         )
 
 
