@@ -23,7 +23,7 @@ export async function synthesize(text, voice, model, rate, returnType, audioForm
     content: text,
     rate: parseFloat(rate) || 1.0,
     sample_rate: parseInt(model) || 16000,
-    accent: parseInt(voice) || 1,
+    accent: parseInt(voice) || 4,
     return_type: returnType || 'url',
     audio_format: audioFormat || 'wav',
     max_word_per_sent: parseInt(maxWordPerSent) || 100
