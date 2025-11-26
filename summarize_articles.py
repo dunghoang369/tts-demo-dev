@@ -209,6 +209,9 @@ if __name__ == "__main__":
         title = result.get("title", "")
         publish_datetime = result.get("publish_time", "")
 
+        import pdb
+
+        pdb.set_trace()
         # Extract and parse date/time
         date_match = re.search(r"(\d{2})/(\d{2})/(\d{4})", publish_datetime)
         publish_date = (
