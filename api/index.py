@@ -207,9 +207,11 @@ def upload_to_firestore(db, news_items: List[dict], fetch_metadata: dict):
 async def process_and_upload_news(news_type: str, limit: int = 5):
     """
     Process news for a specific category:
-    1. Fetch news from API
-    2. Summarize each article
-    3. Upload to Firestore
+    1. Fetch 10 news articles from API
+    2. Filter articles with full_text > 50 characters
+    3. Keep only the first 5 filtered articles
+    4. Summarize each article
+    5. Upload to Firestore
     Returns: dict with processing statistics
     """
     try:
@@ -217,8 +219,8 @@ async def process_and_upload_news(news_type: str, limit: int = 5):
         news_category = await get_news_category()
         category = news_category.get(news_type, {}).get("category", news_type)
 
-        # Fetch news
-        news = await get_news(news_type, limit)
+        # Fetch 10 news articles
+        news = await get_news(news_type, 10)
         results = news.get("results", {})
         articles = results.get("articles", [])
 
@@ -231,11 +233,33 @@ async def process_and_upload_news(news_type: str, limit: int = 5):
                 "failed": 0,
             }
 
+        # Filter articles with full_text > 50 characters
+        filtered_articles = [
+            article for article in articles if len(article.get("full_text", "")) > 50
+        ]
+
+        logger.info(
+            f"Fetched {len(articles)} articles, {len(filtered_articles)} passed filter (full_text > 50)"
+        )
+
+        # Keep only the first 5 filtered articles
+        articles_to_process = filtered_articles[:5]
+        logger.info(f"Processing {len(articles_to_process)} articles")
+
+        if not articles_to_process:
+            logger.warning(f"No articles passed the filter for category: {news_type}")
+            return {
+                "category": category,
+                "articles": len(articles),
+                "uploaded": 0,
+                "failed": 0,
+            }
+
         news_items = []
         fetch_date = datetime.now().isoformat()
         failed_count = 0
 
-        for article in articles:
+        for article in articles_to_process:
             try:
                 title = article.get("title", "")
                 publish_datetime = article.get("publish_time", "")

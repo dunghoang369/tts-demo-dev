@@ -12,7 +12,7 @@ import './App.css'
 
 function App() {
   const { user, logout } = useAuth();
-  const [voice, setVoice] = useState('');
+  const [voice, setVoice] = useState('4');
   const [model, setModel] = useState('');
   const [rate, setRate] = useState('1.0');
   const [returnType, setReturnType] = useState('url');
