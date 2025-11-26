@@ -46,7 +46,7 @@ function SettingsPanel({
       
       // Set default selections
       if (voicesData.length > 0 && !voice) {
-        setVoice(voicesData[0].id);
+        setVoice('4');  // Hồng Phượng (Nữ miền Bắc - Vi)
       }
       if (modelsData.length > 0 && !model) {
         setModel('22050');
