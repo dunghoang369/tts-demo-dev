@@ -819,18 +819,30 @@ async def get_news_by_categories():
 
             article_data = doc.to_dict()
             category = article_data.get("category", "")
-            publish_time = article_data.get("fetch_date", 0)
+            publish_time = article_data.get("publish_time", 0)
+            fetch_date = article_data.get("fetch_date", "")
 
-            if not category or not publish_time:
+            if not category or not publish_time or not fetch_date:
                 continue
 
             # Filter: only include articles from last 7 days
             if publish_time < seven_days_timestamp:
                 continue
 
-            # Format date
-            date_obj = datetime.fromtimestamp(publish_time, tz=timezone.utc)
-            formatted_date = date_obj.strftime("%d/%m/%Y")
+            # Format fetch_date for display (convert from ISO to DD/MM/YYYY)
+            try:
+                # Handle ISO format with or without timezone
+                fetch_datetime = datetime.fromisoformat(
+                    fetch_date.replace("Z", "+00:00")
+                )
+                formatted_date = fetch_datetime.strftime("%d/%m/%Y")
+            except (ValueError, AttributeError):
+                # Fallback to publish date if fetch_date is invalid
+                date_obj = datetime.fromtimestamp(publish_time, tz=timezone.utc)
+                formatted_date = date_obj.strftime("%d/%m/%Y")
+                logger.warning(
+                    f"Invalid fetch_date for article, using publish_time: {fetch_date}"
+                )
 
             # Initialize nested structure
             if category not in articles_by_category_and_date:
