@@ -172,6 +172,54 @@ async def summarize_text(full_text: str):
         return None
 
 
+async def generate_tts_audio(content: str, voice_id: int = 4, sample_rate: int = 22050):
+    """
+    Generate TTS audio from text content
+    Args:
+        content: Text to synthesize
+        voice_id: Voice ID (4 = Hồng Phượng)
+        sample_rate: Audio quality (22050 = High Quality)
+    Returns:
+        base64 encoded audio string or None if failed
+    """
+    try:
+        API_URL = "http://115.79.192.192:19977/invocations"
+        API_KEY = "zNBVyiatKn5eTvC2CEvDg1msgOCHrTZ55zZ0qfsu"
+
+        request_body = {
+            "content": content,
+            "rate": 1.0,
+            "sample_rate": sample_rate,
+            "accent": voice_id,
+            "return_type": "url",
+            "audio_format": "mp3",
+            "max_word_per_sent": 100,
+            "is_summary": 1,
+        }
+
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            response = await client.post(
+                API_URL,
+                json=request_body,
+                headers={
+                    "accept": "application/json",
+                    "api-key": API_KEY,
+                    "Content-Type": "application/json",
+                },
+            )
+
+            if response.status_code == 200:
+                result = response.json()
+                return result.get("audio")  # base64 encoded audio
+            else:
+                logger.error(f"TTS API error: {response.status_code}")
+                return None
+
+    except Exception as e:
+        logger.error(f"Error generating TTS audio: {e}")
+        return None
+
+
 def upload_to_firestore(db, news_items: List[dict], fetch_metadata: dict):
     """Upload news items to Firestore collection with metadata"""
     try:
@@ -330,11 +378,51 @@ async def process_and_upload_news(news_type: str, limit: int = 5):
         metadata = {"fetch_date": fetch_date, "news_type": news_type}
         uploaded_count = upload_to_firestore(db, news_items, metadata)
 
+        # Merge summaries
+        merged_content = ""
+        for article in news_items:
+            title = article.get("title", "")
+            summary = article.get("summary", "")
+            if title and summary:
+                merged_content += f"- {title}: {summary}\n\n"
+
+        # Generate TTS audio for merged content
+        audio_base64 = None
+        if merged_content:
+            logger.info(
+                f"Generating TTS audio for {category} ({len(merged_content)} chars)"
+            )
+            audio_base64 = await generate_tts_audio(merged_content, voice_id=4)
+            if audio_base64:
+                logger.info(f"TTS audio generated successfully for {category}")
+
+                # Save audio to Firestore
+                try:
+                    audio_doc = {
+                        "category": category,
+                        "content": merged_content,
+                        "audio_base64": audio_base64,
+                        "generated_at": datetime.now().isoformat(),
+                        "voice": "Hồng Phượng",
+                        "voice_id": 4,
+                        "fetch_date": fetch_date,
+                    }
+                    db.collection("tts_audio").document(
+                        f"{category}_{int(datetime.now().timestamp())}"
+                    ).set(audio_doc)
+                    logger.info(f"TTS audio saved to Firestore for {category}")
+                except Exception as e:
+                    logger.error(f"Error saving TTS audio to Firestore: {e}")
+            else:
+                logger.warning(f"Failed to generate TTS audio for {category}")
+
         return {
             "category": category,
             "articles": len(articles),
             "uploaded": uploaded_count,
             "failed": failed_count,
+            "has_audio": audio_base64 is not None,
+            "audio_generated": bool(audio_base64),
         }
 
     except Exception as e:
@@ -731,7 +819,7 @@ async def get_news_by_categories():
 
             article_data = doc.to_dict()
             category = article_data.get("category", "")
-            publish_time = article_data.get("publish_time", 0)
+            publish_time = article_data.get("fetch_date", 0)
 
             if not category or not publish_time:
                 continue
