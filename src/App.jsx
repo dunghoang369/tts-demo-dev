@@ -38,7 +38,7 @@ function App() {
       return result.audioUrl;
     } catch (error) {
       console.error('Synthesis failed:', error);
-      alert('Failed to synthesize speech. Please try again.');
+      alert('Không thể tạo giọng nói. Vui lòng thử lại.');
       return null;
     } finally {
       setIsLoading(false);
@@ -46,7 +46,7 @@ function App() {
   };
 
   const handleLogout = async () => {
-    if (window.confirm('Are you sure you want to logout?')) {
+    if (window.confirm('Bạn có chắc muốn đăng xuất?')) {
       await logout();
     }
   };
