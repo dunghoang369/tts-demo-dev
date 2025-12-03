@@ -5,8 +5,9 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  height: fit-content;
+  max-height: calc(100vh - 120px);
   border: 1px solid var(--border-color);
+  overflow: hidden;
 }
 
 .news-tags-header {
@@ -33,9 +34,10 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: 600px;
+  flex: 1;
   overflow-y: auto;
   padding-right: 4px;
+  min-height: 0;
 }
 
 .news-tags-timeline::-webkit-scrollbar {
@@ -133,6 +135,8 @@
   gap: 6px;
   padding: 10px;
   background: var(--panel-bg);
+  max-height: 400px;
+  overflow-y: auto;
 }
 
 /* Day Tag */
@@ -239,14 +243,15 @@
 @media (max-width: 968px) {
   .news-tags {
     order: -1;
-  }
-  
-  .news-tags-timeline {
-    max-height: 400px;
+    max-height: 500px;
   }
 }
 
 @media (max-width: 640px) {
+  .news-tags {
+    max-height: 450px;
+  }
+
   .category-header {
     padding: 12px 14px;
     font-size: 13px;
@@ -258,9 +263,5 @@
   
   .day-tag {
     padding: 10px 12px;
-  }
-  
-  .news-tags-timeline {
-    max-height: 350px;
   }
 }

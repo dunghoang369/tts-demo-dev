@@ -24,7 +24,7 @@ function TextEditor({ onSynthesize, isLoading, externalText, onTextChange }) {
 
   const handleSpeak = async () => {
     if (!text.trim()) {
-      alert('Please enter some text to synthesize');
+      alert('Vui lòng nhập văn bản để chuyển đổi thành giọng nói');
       return;
     }
     
