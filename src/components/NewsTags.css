@@ -135,6 +135,8 @@
   gap: 6px;
   padding: 10px;
   background: var(--panel-bg);
+  max-height: 400px;
+  overflow-y: auto;
 }
 
 /* Day Tag */
