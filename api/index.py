@@ -192,12 +192,12 @@ async def generate_tts_audio(content: str, voice_id: int = 4, sample_rate: int =
             "sample_rate": sample_rate,
             "accent": voice_id,
             "return_type": "url",
-            "audio_format": "mp3",
+            "audio_format": "wav",
             "max_word_per_sent": 100,
             "is_summary": 1,
         }
 
-        async with httpx.AsyncClient(timeout=120.0) as client:
+        async with httpx.AsyncClient(timeout=600.0) as client:
             response = await client.post(
                 API_URL,
                 json=request_body,
