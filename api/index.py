@@ -826,7 +826,7 @@ async def get_news_by_categories():
                 continue
 
             # Filter: only include articles from last 7 days
-            if publish_time < seven_days_timestamp:
+            if fetch_date < seven_days_timestamp:
                 continue
 
             # Format fetch_date for display (convert from ISO to DD/MM/YYYY)
