@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import TextEditor from './components/TextEditor'
 import SettingsPanel from './components/SettingsPanel'
 import NewsTags from './components/NewsTags'
@@ -11,6 +12,7 @@ import { useAuth } from './context/AuthContext'
 import './App.css'
 
 function App() {
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [voice, setVoice] = useState('4');
   const [model, setModel] = useState('');
@@ -51,6 +53,10 @@ function App() {
     }
   };
 
+  const handleBackToHome = () => {
+    navigate('/');
+  };
+
   const handleTagClick = (newsContent) => {
     setEditorText(newsContent);
   };
@@ -60,6 +66,9 @@ function App() {
       <NewsNotification show={hasNewContent} onRefresh={refreshNews} />
       <header className="header">
         <div className="brand">
+          <button onClick={handleBackToHome} className="back-button">
+            ← Back
+          </button>
           <span className="logo">🔊</span>
           <h1 className="title">Text to Speech</h1>
         </div>
