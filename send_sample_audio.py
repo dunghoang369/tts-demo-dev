@@ -144,9 +144,13 @@ if __name__ == "__main__":
     print(f"API URL: {NETSPEECH_API_URL}")
     print(f"Audio file: output.wav")
 
-    result_netspeech = send_audio_file_netspeech("output.wav")
-    result_snr = send_audio_file_snr("output.wav")
-    result_audio_converter = send_audio_file_audio_converter("output.wav")
+    result_netspeech = send_audio_file_netspeech("thank-you-thanks-alot-435477.mp3")
+    # result_snr = send_audio_file_snr(
+    # "medieval-gamer-voice-gather-your-strength-stay-focused-226586.mp3"
+    # )
+    # result_audio_converter = send_audio_file_audio_converter(
+    # "medieval-gamer-voice-gather-your-strength-stay-focused-226586.mp3"
+    # )
     import pdb
 
     pdb.set_trace()
