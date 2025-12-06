@@ -3,6 +3,7 @@ import { useAuth } from './context/AuthContext';
 import Login from './components/Login';
 import App from './App';
 import LandingPage from './components/LandingPage';
+import AudioTools from './components/AudioTools';
 
 function ProtectedApp() {
   const { authenticated, loading, login } = useAuth();
@@ -33,6 +34,7 @@ function ProtectedApp() {
       <Route path="/" element={<LandingPage />} />
       <Route path="/tts" element={<App />} />
       <Route path="/summarize" element={<App />} />
+      <Route path="/audio-tools" element={<AudioTools />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

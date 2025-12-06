@@ -56,6 +56,17 @@ function LandingPage() {
               Get Started →
             </div>
           </Link>
+
+          <Link to="/audio-tools" className="service-card">
+            <div className="service-icon">🎵</div>
+            <h3 className="service-title">Audio Tools</h3>
+            <p className="service-description">
+              Analyze and convert audio files with NetSpeech, SNR analysis, and audio converter
+            </p>
+            <div className="service-button">
+              Get Started →
+            </div>
+          </Link>
         </div>
 
         <div className="features-section">
