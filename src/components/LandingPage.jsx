@@ -61,7 +61,7 @@ function LandingPage() {
             <div className="service-icon">🎵</div>
             <h3 className="service-title">Audio Tools</h3>
             <p className="service-description">
-              Analyze audio quality, calculate SNR, and convert audio formats
+              Detect voice activity, calculate SNR score, and convert audio formats
             </p>
             <div className="service-button">
               Get Started →

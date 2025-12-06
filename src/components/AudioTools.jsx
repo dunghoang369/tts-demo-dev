@@ -164,7 +164,7 @@ function AudioTools() {
           <div className="api-section">
             <h3>🎤 NetSpeech Quality Analysis</h3>
             <p className="api-description">
-              Analyze speech quality and pronunciation metrics
+              Detect intervals of time that contain human voice in the audio
             </p>
             <button
               onClick={handleNetSpeechAnalysis}
@@ -194,7 +194,7 @@ function AudioTools() {
           <div className="api-section">
             <h3>📊 SNR Analysis</h3>
             <p className="api-description">
-              Calculate Signal-to-Noise Ratio for audio quality assessment
+              Calculate Signal-to-Noise Ratio score for audio quality assessment
             </p>
             <button
               onClick={handleSNRAnalysis}
