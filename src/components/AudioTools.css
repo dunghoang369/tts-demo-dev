@@ -183,6 +183,74 @@
   font-weight: 600;
 }
 
+/* NetSpeech Intervals */
+.intervals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.interval-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.interval-label {
+  color: var(--accent-color);
+  font-weight: 600;
+  min-width: 80px;
+}
+
+.interval-time {
+  color: var(--text-color);
+  font-weight: 500;
+  font-family: 'Monaco', 'Courier New', monospace;
+}
+
+.interval-duration {
+  color: var(--text-muted);
+  font-size: 12px;
+  margin-left: auto;
+}
+
+.no-result {
+  color: var(--text-muted);
+  font-size: 13px;
+  text-align: center;
+  padding: 12px;
+  margin: 0;
+}
+
+/* SNR Result */
+.snr-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+}
+
+.snr-value {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--accent-secondary);
+  font-family: 'Monaco', 'Courier New', monospace;
+}
+
+.snr-quality {
+  font-size: 16px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: rgba(124, 92, 255, 0.1);
+}
+
 .result-json {
   background: var(--panel-bg);
   border: 1px solid var(--border-color);

@@ -182,10 +182,24 @@ function AudioTools() {
             
             {netSpeechResult && (
               <div className="result-container">
-                <h4>Results:</h4>
-                <pre className="result-json">
-                  {JSON.stringify(netSpeechResult, null, 2)}
-                </pre>
+                <h4>Voice Activity Intervals:</h4>
+                {netSpeechResult.segments && netSpeechResult.segments.length > 0 ? (
+                  <div className="intervals-list">
+                    {netSpeechResult.segments.map((segment, index) => (
+                      <div key={index} className="interval-item">
+                        <span className="interval-label">Segment {index + 1}:</span>
+                        <span className="interval-time">
+                          {segment[0].toFixed(2)}s - {segment[1].toFixed(2)}s
+                        </span>
+                        <span className="interval-duration">
+                          (Duration: {(segment[1] - segment[0]).toFixed(2)}s)
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="no-result">No voice detected in audio</p>
+                )}
               </div>
             )}
           </div>
@@ -212,10 +226,18 @@ function AudioTools() {
             
             {snrResult && (
               <div className="result-container">
-                <h4>Results:</h4>
-                <pre className="result-json">
-                  {JSON.stringify(snrResult, null, 2)}
-                </pre>
+                <h4>Signal-to-Noise Ratio:</h4>
+                <div className="snr-result">
+                  <div className="snr-value">
+                    {snrResult.snr ? snrResult.snr.toFixed(2) : 'N/A'} dB
+                  </div>
+                  <div className="snr-quality">
+                    {snrResult.snr >= 30 ? '✅ Excellent Quality' : 
+                     snrResult.snr >= 20 ? '✅ Good Quality' :
+                     snrResult.snr >= 10 ? '⚠️ Fair Quality' :
+                     '❌ Poor Quality'}
+                  </div>
+                </div>
               </div>
             )}
           </div>
