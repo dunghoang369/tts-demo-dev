@@ -1,0 +1,257 @@
+/* Audio Tools Page Styles */
+
+.audio-tools {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-color);
+}
+
+.audio-tools-main {
+  flex: 1;
+  padding: 32px 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* File Upload Section */
+.file-upload-section {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 32px;
+}
+
+.file-upload-section h2 {
+  margin: 0 0 16px 0;
+  color: var(--text-color);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.file-upload-container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.file-input {
+  display: none;
+}
+
+.file-label {
+  flex: 1;
+  padding: 16px 20px;
+  background: var(--input-bg);
+  border: 2px dashed var(--border-color);
+  border-radius: 8px;
+  color: var(--text-muted);
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.file-label:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+  background: rgba(124, 92, 255, 0.05);
+}
+
+/* API Sections Grid */
+.api-sections {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 24px;
+}
+
+.api-section {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.api-section h3 {
+  margin: 0;
+  color: var(--text-color);
+  font-size: 20px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.api-description {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.api-button {
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-secondary));
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.api-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(124, 92, 255, 0.3);
+}
+
+.api-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Converter Section Parameters */
+.converter-section {
+  grid-column: 1 / -1;
+}
+
+.converter-params {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  padding: 16px;
+  background: var(--input-bg);
+  border-radius: 8px;
+}
+
+.param-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.param-group label {
+  color: var(--text-color);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.param-select,
+.param-input {
+  padding: 10px 12px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-color);
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.param-select:focus,
+.param-input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.1);
+}
+
+.param-input {
+  width: 100%;
+}
+
+/* Results */
+.result-container {
+  background: var(--input-bg);
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 8px;
+}
+
+.result-container h4,
+.result-container h5 {
+  margin: 0 0 12px 0;
+  color: var(--text-color);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.result-json {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 12px;
+  color: var(--accent-secondary);
+  font-size: 12px;
+  font-family: 'Monaco', 'Courier New', monospace;
+  overflow-x: auto;
+  max-height: 300px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.error-message {
+  padding: 12px 16px;
+  background: rgba(255, 92, 92, 0.1);
+  border: 1px solid rgba(255, 92, 92, 0.3);
+  border-radius: 6px;
+  color: #ff5c5c;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Audio Player */
+.audio-player {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.audio-player audio {
+  width: 100%;
+  margin-top: 8px;
+  border-radius: 6px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .api-sections {
+    grid-template-columns: 1fr;
+  }
+  
+  .converter-params {
+    grid-template-columns: 1fr;
+  }
+  
+  .audio-tools-main {
+    padding: 20px 16px;
+  }
+}
+
+/* Back button styles (reused from App.css pattern) */
+.audio-tools .back-button {
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-color);
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.audio-tools .back-button:hover {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+  transform: translateX(-2px);
+}
+
