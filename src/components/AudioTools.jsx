@@ -319,17 +319,22 @@ function AudioTools() {
             
             {converterResult && (
               <div className="result-container">
-                <h4>Results:</h4>
-                <pre className="result-json">
-                  {JSON.stringify(converterResult, null, 2)}
-                </pre>
-                {converterResult.audio && returnType === 'url' && (
+                {converterResult.audio && returnType === 'url' ? (
                   <div className="audio-player">
-                    <h5>Converted Audio:</h5>
+                    <h4>Converted Audio:</h4>
                     <audio controls src={converterResult.audio}>
                       Your browser does not support the audio element.
                     </audio>
                   </div>
+                ) : converterResult.audio && returnType === 'base64' ? (
+                  <div className="audio-player">
+                    <h4>Converted Audio:</h4>
+                    <audio controls src={`data:audio/${audioFormat};base64,${converterResult.audio}`}>
+                      Your browser does not support the audio element.
+                    </audio>
+                  </div>
+                ) : (
+                  <p className="no-result">Audio conversion completed but no audio data returned</p>
                 )}
               </div>
             )}
