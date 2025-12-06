@@ -116,8 +116,10 @@ function AudioTools() {
         audio_format: audioFormat
       };
       const result = await sendToConverter(selectedFile, params);
+      console.log('Converter result:', result);
       setConverterResult(result);
     } catch (error) {
+      console.error('Converter error:', error);
       setConverterError(error.message);
     } finally {
       setLoadingConverter(false);
@@ -319,17 +321,21 @@ function AudioTools() {
             
             {converterResult && (
               <div className="result-container">
-                {converterResult.audio && returnType === 'url' ? (
+                {converterResult.audio ? (
                   <div className="audio-player">
                     <h4>Converted Audio:</h4>
-                    <audio controls src={converterResult.audio}>
-                      Your browser does not support the audio element.
-                    </audio>
-                  </div>
-                ) : converterResult.audio && returnType === 'base64' ? (
-                  <div className="audio-player">
-                    <h4>Converted Audio:</h4>
-                    <audio controls src={`data:audio/${audioFormat};base64,${converterResult.audio}`}>
+                    <audio 
+                      controls 
+                      src={
+                        converterResult.audio.startsWith('http') 
+                          ? converterResult.audio 
+                          : `data:audio/${audioFormat};base64,${converterResult.audio}`
+                      }
+                      onError={(e) => {
+                        console.error('Audio load error:', e);
+                        console.log('Audio data:', converterResult.audio?.substring(0, 100));
+                      }}
+                    >
                       Your browser does not support the audio element.
                     </audio>
                   </div>
