@@ -1206,5 +1206,144 @@ async def cleanup_old_news():
         )
 
 
+@app.post("/api/audio/netspeech")
+async def audio_netspeech(request: Request):
+    """Forward audio file to NetSpeech API for quality analysis"""
+    try:
+        # Get the uploaded file from form data
+        form = await request.form()
+        file = form.get("file")
+
+        if not file:
+            return JSONResponse(status_code=400, content={"error": "No file provided"})
+
+        # Read file content
+        file_content = await file.read()
+
+        # Forward to NetSpeech API
+        NETSPEECH_API_URL = "http://115.79.192.192:19977/get_netspeech"
+
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            files = {
+                "file": (file.filename, file_content, file.content_type or "audio/wav")
+            }
+            headers = {"accept": "application/json", "api-key": TTS_API_KEY}
+
+            response = await client.post(
+                NETSPEECH_API_URL, files=files, headers=headers
+            )
+
+            if response.status_code != 200:
+                return JSONResponse(
+                    status_code=response.status_code,
+                    content={"error": "NetSpeech API error", "details": response.text},
+                )
+
+            return JSONResponse(content=response.json())
+
+    except Exception as e:
+        logger.error(f"NetSpeech proxy error: {type(e).__name__}: {e}")
+        return JSONResponse(
+            status_code=500, content={"error": "Proxy error", "message": str(e)}
+        )
+
+
+@app.post("/api/audio/snr")
+async def audio_snr(request: Request):
+    """Forward audio file to SNR API for signal-to-noise ratio analysis"""
+    try:
+        # Get the uploaded file from form data
+        form = await request.form()
+        file = form.get("file")
+
+        if not file:
+            return JSONResponse(status_code=400, content={"error": "No file provided"})
+
+        # Read file content
+        file_content = await file.read()
+
+        # Forward to SNR API
+        SNR_API_URL = "http://115.79.192.192:19977/get_snr"
+
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            files = {
+                "file": (file.filename, file_content, file.content_type or "audio/wav")
+            }
+            headers = {"accept": "application/json", "api-key": TTS_API_KEY}
+
+            response = await client.post(SNR_API_URL, files=files, headers=headers)
+
+            if response.status_code != 200:
+                return JSONResponse(
+                    status_code=response.status_code,
+                    content={"error": "SNR API error", "details": response.text},
+                )
+
+            return JSONResponse(content=response.json())
+
+    except Exception as e:
+        logger.error(f"SNR proxy error: {type(e).__name__}: {e}")
+        return JSONResponse(
+            status_code=500, content={"error": "Proxy error", "message": str(e)}
+        )
+
+
+@app.post("/api/audio/converter")
+async def audio_converter(request: Request):
+    """Forward audio file to Audio Converter API with conversion parameters"""
+    try:
+        # Get the uploaded file and query parameters from form data
+        form = await request.form()
+        file = form.get("file")
+
+        if not file:
+            return JSONResponse(status_code=400, content={"error": "No file provided"})
+
+        # Read file content
+        file_content = await file.read()
+
+        # Get query parameters from URL
+        sample_rate = request.query_params.get("sample_rate", "22050")
+        rate = request.query_params.get("rate", "1.0")
+        return_type = request.query_params.get("return_type", "url")
+        audio_format = request.query_params.get("audio_format", "wav")
+
+        # Forward to Audio Converter API
+        AUDIO_CONVERTER_API_URL = "http://115.79.192.192:19977/audio_converter"
+
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            files = {
+                "file": (file.filename, file_content, file.content_type or "audio/wav")
+            }
+            headers = {"accept": "application/json", "api-key": TTS_API_KEY}
+            params = {
+                "sample_rate": sample_rate,
+                "rate": rate,
+                "return_type": return_type,
+                "audio_format": audio_format,
+            }
+
+            response = await client.post(
+                AUDIO_CONVERTER_API_URL, files=files, headers=headers, params=params
+            )
+
+            if response.status_code != 200:
+                return JSONResponse(
+                    status_code=response.status_code,
+                    content={
+                        "error": "Audio Converter API error",
+                        "details": response.text,
+                    },
+                )
+
+            return JSONResponse(content=response.json())
+
+    except Exception as e:
+        logger.error(f"Audio Converter proxy error: {type(e).__name__}: {e}")
+        return JSONResponse(
+            status_code=500, content={"error": "Proxy error", "message": str(e)}
+        )
+
+
 # Vercel serverless handler - Use ASGI interface directly
 app_handler = app
