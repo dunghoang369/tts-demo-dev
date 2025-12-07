@@ -171,11 +171,10 @@ function AudioTools() {
             <h3>🔄 Audio Converter</h3>
             <div className="audio-tools-params">
               <label>Sample Rate: <select value={sampleRate} onChange={(e) => setSampleRate(Number(e.target.value))} className="audio-tools-select">
-                <option value={8000}>8000 Hz</option>
-                <option value={16000}>16000 Hz</option>
-                <option value={22050}>22050 Hz</option>
-                <option value={44100}>44100 Hz</option>
-                <option value={48000}>48000 Hz</option>
+                <option value={8000}>8kHz (Low Quality)</option>
+                <option value={16000}>16kHz (Standard)</option>
+                <option value={22050}>22kHz (High Quality)</option>
+                <option value={44100}>44kHz (Premium)</option>
               </select></label>
               <label>Rate: <select value={rate} onChange={(e) => setRate(Number(e.target.value))} className="audio-tools-select">
                 <option value={0.8}>0.8x (Very Slow)</option>
