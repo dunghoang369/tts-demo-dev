@@ -177,7 +177,14 @@ function AudioTools() {
                 <option value={44100}>44100 Hz</option>
                 <option value={48000}>48000 Hz</option>
               </select></label>
-              <label>Rate: <input type="number" min="0.5" max="2.0" step="0.1" value={rate} onChange={(e) => setRate(Number(e.target.value))} className="audio-tools-input-num" /></label>
+              <label>Rate: <select value={rate} onChange={(e) => setRate(Number(e.target.value))} className="audio-tools-select">
+                <option value={0.8}>0.8x (Very Slow)</option>
+                <option value={0.9}>0.9x (Slow)</option>
+                <option value={1.0}>1.0x (Normal)</option>
+                <option value={1.05}>1.05x (Slightly Fast)</option>
+                <option value={1.1}>1.1x (Fast)</option>
+                <option value={1.2}>1.2x (Very Fast)</option>
+              </select></label>
               <label>Return: <select value={returnType} onChange={(e) => setReturnType(e.target.value)} className="audio-tools-select">
                 <option value="url">URL</option>
                 <option value="base64">Base64</option>
