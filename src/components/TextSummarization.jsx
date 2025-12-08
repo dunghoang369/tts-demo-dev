@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import TextEditor from './TextEditor'
 import SettingsPanel from './SettingsPanel'
 import NewsTags from './NewsTags'
-import TextNorm from './TextNorm'
 import NewsNotification from './NewsNotification'
 import { synthesize } from '../api/ttsService'
 import { useNewsPolling } from '../hooks/useNewsPolling'
@@ -19,7 +18,6 @@ function TextSummarization() {
   const [returnType, setReturnType] = useState('url');
   const [audioFormat, setAudioFormat] = useState('wav');
   const [maxWordPerSent, setMaxWordPerSent] = useState(100);
-  const [normalizedText, setNormalizedText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [editorText, setEditorText] = useState('');
 
@@ -30,11 +28,6 @@ function TextSummarization() {
     try {
       setIsLoading(true);
       const result = await synthesize(text, voice, model, rate, returnType, audioFormat, maxWordPerSent);
-      
-      // Extract normalized text from response
-      if (result.normalizedText) {
-        setNormalizedText(result.normalizedText);
-      }
       
       return result.audioUrl;
     } catch (error) {
@@ -87,7 +80,6 @@ function TextSummarization() {
             externalText={editorText}
             onTextChange={setEditorText}
           />
-          <TextNorm normalizedText={normalizedText} />
         </div>
         
         <aside className="news-tags-section">
