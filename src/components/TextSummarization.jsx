@@ -79,6 +79,7 @@ function TextSummarization() {
             isLoading={isLoading}
             externalText={editorText}
             onTextChange={setEditorText}
+            showSuggestions={false}
           />
         </div>
         

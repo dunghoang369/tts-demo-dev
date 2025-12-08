@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import './TextEditor.css';
 
-function TextEditor({ onSynthesize, isLoading, externalText, onTextChange }) {
+function TextEditor({ onSynthesize, isLoading, externalText, onTextChange, showSuggestions = true }) {
   const [text, setText] = useState('Xin chào, tôi là trợ lý ảo. Hôm nay tôi sẽ giúp bạn chuyển đổi văn bản thành giọng nói tiếng Việt.');
   const audioRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -116,7 +116,7 @@ function TextEditor({ onSynthesize, isLoading, externalText, onTextChange }) {
         disabled={isLoading}
       />
       
-      {!text.trim() && (
+      {!text.trim() && showSuggestions && (
         <div className="quick-start">
           <p className="quick-start-title">Get started with</p>
           <div className="quick-start-buttons">
