@@ -916,7 +916,7 @@ async def get_news_by_categories():
                         title = article.get("title", "")
                         summary = article.get("summary", "")
                         if title and summary:
-                            merged_content += f"- {title}: {summary}\n\n"
+                            merged_content += f"* {title}: {summary}\n\n"
 
                     # Create entry for this date
                     date_entry = {
