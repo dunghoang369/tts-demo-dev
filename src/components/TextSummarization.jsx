@@ -80,6 +80,7 @@ function TextSummarization() {
             externalText={editorText}
             onTextChange={setEditorText}
             showSuggestions={false}
+            readOnly={true}
           />
         </div>
         

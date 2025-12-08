@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import './TextEditor.css';
 
-function TextEditor({ onSynthesize, isLoading, externalText, onTextChange, showSuggestions = true }) {
+function TextEditor({ onSynthesize, isLoading, externalText, onTextChange, showSuggestions = true, readOnly = false }) {
   const [text, setText] = useState('Xin chào, tôi là trợ lý ảo. Hôm nay tôi sẽ giúp bạn chuyển đổi văn bản thành giọng nói tiếng Việt.');
   const audioRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -114,6 +114,7 @@ function TextEditor({ onSynthesize, isLoading, externalText, onTextChange, showS
         onChange={(e) => handleTextChange(e.target.value)}
         placeholder="Type or paste text to synthesize..."
         disabled={isLoading}
+        readOnly={readOnly}
       />
       
       {!text.trim() && showSuggestions && (
@@ -172,6 +173,7 @@ function TextEditor({ onSynthesize, isLoading, externalText, onTextChange, showS
             className="btn btn-ghost" 
             onClick={handleClear}
             title="Clear text"
+            disabled={readOnly}
           >
             ✕ Clear
           </button>
