@@ -1,7 +1,8 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Login from './components/Login';
-import App from './App';
+import TextToSpeech from './components/TextToSpeech';
+import TextSummarization from './components/TextSummarization';
 import LandingPage from './components/LandingPage';
 import AudioTools from './components/AudioTools';
 
@@ -32,8 +33,8 @@ function ProtectedApp() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
-      <Route path="/tts" element={<App />} />
-      <Route path="/summarize" element={<App />} />
+      <Route path="/tts" element={<TextToSpeech />} />
+      <Route path="/summarize" element={<TextSummarization />} />
       <Route path="/audio-tools" element={<AudioTools />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -1,0 +1,138 @@
+:root {
+  --bg-color: #0b0c10;
+  --panel-bg: #111218;
+  --input-bg: #171826;
+  --text-color: #e6e7eb;
+  --text-muted: #a3a7b3;
+  --border-color: #20222b;
+  --accent-color: #7c5cff;
+  --accent-secondary: #5ec1ff;
+}
+
+.text-to-speech {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.text-to-speech .header {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border-color);
+  background: rgba(11, 12, 16, 0.8);
+  backdrop-filter: blur(8px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.text-to-speech .brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.text-to-speech .user-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.text-to-speech .username {
+  color: var(--text-color);
+  font-size: 13px;
+  font-weight: 500;
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.text-to-speech .logout-button {
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-color);
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.text-to-speech .logout-button:hover {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+  transform: translateY(-1px);
+}
+
+.text-to-speech .logo {
+  font-size: 24px;
+}
+
+.text-to-speech .title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.text-to-speech .back-button {
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-color);
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.text-to-speech .back-button:hover {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+  transform: translateX(-2px);
+}
+
+.text-to-speech .main-layout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+  padding: 24px;
+  max-width: 1600px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.text-to-speech .editor-section {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.text-to-speech .settings-section {
+  min-width: 0;
+}
+
+@media (max-width: 1200px) {
+  .text-to-speech .main-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .text-to-speech .main-layout {
+    padding: 16px;
+    gap: 16px;
+  }
+  
+  .text-to-speech .header {
+    padding: 12px 16px;
+  }
+}
+
