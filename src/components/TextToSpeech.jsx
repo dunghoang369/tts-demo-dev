@@ -22,11 +22,19 @@ function TextToSpeech() {
   const handleSynthesize = async (text) => {
     try {
       setIsLoading(true);
+      console.log('Starting TTS synthesis...');
       const result = await synthesize(text, voice, model, rate, returnType, audioFormat, maxWordPerSent);
+      
+      console.log('TTS Result:', result);
+      console.log('Normalized Text from result:', result.normalizedText);
       
       // Extract normalized text from response
       if (result.normalizedText) {
+        console.log('Setting normalized text:', result.normalizedText);
         setNormalizedText(result.normalizedText);
+      } else {
+        console.warn('No normalized text in response');
+        setNormalizedText('');
       }
       
       return result.audioUrl;
