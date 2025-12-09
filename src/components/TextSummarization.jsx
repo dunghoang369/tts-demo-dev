@@ -62,7 +62,7 @@ function TextSummarization() {
             ← Back
           </button>
           <span className="logo">📝</span>
-          <h1 className="title">Text Summarization</h1>
+          <h1 className="title">Collect and Summarize the news</h1>
         </div>
         <div className="user-section">
           <span className="username">👤 {user?.email || user?.username}</span>

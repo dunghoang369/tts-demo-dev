@@ -48,7 +48,7 @@ function LandingPage() {
 
           <Link to="/summarize" className="service-card">
             <div className="service-icon">📝</div>
-            <h3 className="service-title">Text Summarization</h3>
+            <h3 className="service-title">Collect and Summarize the news</h3>
             <p className="service-description">
               Summarize long texts and convert them to speech in one seamless workflow
             </p>
