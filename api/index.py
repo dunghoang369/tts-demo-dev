@@ -48,10 +48,10 @@ app.add_middleware(
 
 # Mock user databases
 USERS = {
-    "admin": "admin123",
-    "demo": "demo123",
-    "user": "password",
-    "namitech": "namitech123",
+    # "admin": "admin123",
+    # "demo": "demo123",
+    # "user": "password",
+    "namitech": "ASZo2T3thum5eLugcs1SnkRbsCGwcoszoQwalokhcHO7MQD6jz",
 }
 
 EMAIL_USERS = {
