@@ -51,7 +51,7 @@ USERS = {
     # "admin": "admin123",
     # "demo": "demo123",
     # "user": "password",
-    "namitech": "ASZo2T3thum5eLugcs1SnkRbsCGwcoszoQwalokhcHO7MQD6jz",
+    "namitech": "LT3kzk46e5Q6bqmK",
 }
 
 EMAIL_USERS = {
