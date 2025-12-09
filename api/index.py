@@ -934,7 +934,7 @@ async def get_news_by_categories():
                     date_entry = {
                         "date": date_str,
                         "title": f"Tin tức {category_name} - {date_str}",
-                        "content": merged_content.strip(),
+                        "content": merged_content.rstrip(),
                         "article_count": len(articles),
                     }
 
