@@ -47,7 +47,12 @@ app.add_middleware(
 )
 
 # Mock user databases
-USERS = {"admin": "admin123", "demo": "demo123", "user": "password"}
+USERS = {
+    "admin": "admin123",
+    "demo": "demo123",
+    "user": "password",
+    "namitech": "namitech123",
+}
 
 EMAIL_USERS = {
     "admin@namisense.ai": "admin123",
