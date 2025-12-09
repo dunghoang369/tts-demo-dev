@@ -680,8 +680,15 @@ async def tts_synthesize(request: Request):
                     content={"error": "TTS API error", "details": response.text},
                 )
 
+            # Log the response for debugging
+            response_data = response.json()
+            logger.info(f"TTS API Response keys: {response_data.keys()}")
+            logger.info(
+                f"TTS API normed_text: {response_data.get('normed_text', 'NOT FOUND')}"
+            )
+
             # Return the JSON response from TTS API
-            return JSONResponse(content=response.json())
+            return JSONResponse(content=response_data)
 
     except httpx.TimeoutException as e:
         logger.error(f"TTS API timeout: {e}")

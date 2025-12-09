@@ -142,12 +142,12 @@ function AudioTools() {
             {netSpeechError && <div className="audio-tools-error">❌ {netSpeechError}</div>}
             {netSpeechResult?.segments && (
               <div className="audio-tools-results">
-                <h4>Voice Intervals:</h4>
                 {netSpeechResult.netspeech !== undefined && (
                   <div className="audio-tools-total">
                     <strong>Total Duration: {netSpeechResult.netspeech.toFixed(2)}s</strong>
                   </div>
                 )}
+                <h4>Voice Intervals:</h4>
                 {netSpeechResult.segments.map((seg, i) => (
                   <div key={i} className="audio-tools-interval">
                     Segment {i + 1}: {seg[0].toFixed(2)}s - {seg[1].toFixed(2)}s

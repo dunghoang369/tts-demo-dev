@@ -54,12 +54,23 @@ export async function synthesize(text, voice, model, rate, returnType, audioForm
       console.log('API Response status:', data.status, data.description);
       console.log('Full API Response:', data);
       console.log('Available keys:', Object.keys(data));
+      console.log('Raw normed_text value:', data.normed_text);
+      console.log('Raw normalized_text value:', data.normalized_text);
       
       // Extract the base64 waveform from the response
       const base64Waveform = data.audio;
-      const normalizedText = data.normed_text || '';
+      // Handle normed_text - check for valid content
+      let normalizedText = data.normed_text || data.normalized_text || data.norm_text || '';
       
-      console.log('Extracted normalizedText:', normalizedText);
+      // Only filter out Python's "None" string and other clearly invalid values
+      if (normalizedText === 'None' || normalizedText === 'null' || normalizedText === null || normalizedText === undefined || normalizedText === '') {
+        console.warn('Normalized text is empty or invalid:', normalizedText);
+        normalizedText = '';
+      } else {
+        console.log('Valid normalized text found:', normalizedText);
+      }
+      
+      console.log('Final extracted normalizedText:', normalizedText);
       
       if (!base64Waveform) {
         console.error('Response data:', data);

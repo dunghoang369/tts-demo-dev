@@ -193,6 +193,16 @@
   font-size: 14px;
 }
 
+.audio-tools-total {
+  margin: 0 0 12px 0;
+  color: var(--at-text-color);
+  font-size: 14px;
+}
+
+.audio-tools-total strong {
+  font-weight: 600;
+}
+
 .audio-tools-interval {
   padding: 8px 12px;
   margin: 6px 0;
