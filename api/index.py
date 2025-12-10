@@ -1,6 +1,15 @@
-from fastapi import FastAPI, HTTPException, Depends, status, Request
+from fastapi import (
+    FastAPI,
+    HTTPException,
+    Depends,
+    status,
+    Request,
+    UploadFile,
+    File,
+    Form,
+)
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from jose import JWTError, jwt
@@ -1359,7 +1368,6 @@ async def audio_converter(request: Request):
 
 @app.post("/api/audio/generate")
 async def audio_generate(
-    request: Request,
     file: UploadFile = File(...),
     gen_text: str = Form(...),
     ref_lang: str = Form("vi"),
