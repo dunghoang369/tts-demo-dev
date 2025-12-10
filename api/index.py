@@ -48,16 +48,16 @@ app.add_middleware(
 
 # Mock user databases
 USERS = {
-    # "admin": "admin123",
-    # "demo": "demo123",
-    # "user": "password",
-    "namitech": "LT3kzk46e5Q6bqmK",
+    # "admin": {"password": "admin123", "role": "premium"},
+    # "demo": {"password": "demo123", "role": "standard"},
+    # "user": {"password": "password", "role": "standard"},
+    "namitech": {"password": "LT3kzk46e5Q6bqmK", "role": "premium"},
 }
 
 EMAIL_USERS = {
-    "admin@namisense.ai": "admin123",
-    "user@namisense.ai": "password123",
-    "demo@namisense.ai": "demo123",
+    "admin@namisense.ai": {"password": "admin123", "role": "premium"},
+    "user@namisense.ai": {"password": "password123", "role": "standard"},
+    "demo@namisense.ai": {"password": "demo123", "role": "standard"},
 }
 
 ALLOWED_DOMAIN = os.getenv("ALLOWED_DOMAIN", "namisense.ai")
@@ -450,6 +450,7 @@ class LoginRequest(BaseModel):
 class UserResponse(BaseModel):
     username: str
     email: Optional[str] = None
+    role: str = "standard"
 
 
 class TokenResponse(BaseModel):
@@ -532,6 +533,7 @@ def verify_token(
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         email: Optional[str] = payload.get("email")
+        role: str = payload.get("role", "standard")
 
         if username is None:
             raise HTTPException(
@@ -540,7 +542,7 @@ def verify_token(
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        return {"username": username, "email": email}
+        return {"username": username, "email": email, "role": role}
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -576,18 +578,55 @@ async def login(request: LoginRequest):
                 detail=f"Only {ALLOWED_DOMAIN} email addresses are allowed",
             )
 
-        if identifier in EMAIL_USERS and EMAIL_USERS[identifier] == password:
-            # Extract username from email (part before @)
-            username = identifier.split("@")[0]
-            user_info = {"username": username, "email": identifier}
+        if identifier in EMAIL_USERS:
+            user_data = EMAIL_USERS[identifier]
+            # Handle both old string format and new dict format
+            if isinstance(user_data, dict):
+                if user_data["password"] == password:
+                    # Extract username from email (part before @)
+                    username = identifier.split("@")[0]
+                    user_info = {
+                        "username": username,
+                        "email": identifier,
+                        "role": user_data.get("role", "standard"),
+                    }
+            else:
+                # Legacy string password format
+                if user_data == password:
+                    username = identifier.split("@")[0]
+                    user_info = {
+                        "username": username,
+                        "email": identifier,
+                        "role": "standard",
+                    }
     else:
         # Username authentication
-        if identifier in USERS and USERS[identifier] == password:
-            user_info = {"username": identifier, "email": None}
+        if identifier in USERS:
+            user_data = USERS[identifier]
+            # Handle both old string format and new dict format
+            if isinstance(user_data, dict):
+                if user_data["password"] == password:
+                    user_info = {
+                        "username": identifier,
+                        "email": None,
+                        "role": user_data.get("role", "standard"),
+                    }
+            else:
+                # Legacy string password format
+                if user_data == password:
+                    user_info = {
+                        "username": identifier,
+                        "email": None,
+                        "role": "standard",
+                    }
 
     if user_info:
-        # Create JWT token with user data
-        token_data = {"sub": user_info["username"], "email": user_info["email"]}
+        # Create JWT token with user data including role
+        token_data = {
+            "sub": user_info["username"],
+            "email": user_info["email"],
+            "role": user_info["role"],
+        }
         access_token = create_access_token(token_data)
 
         return TokenResponse(
@@ -766,14 +805,14 @@ async def get_latest_news():
             title = article.get("title", "")
             summary = article.get("summary", "")
             if title and summary:
-                merged_content += f"- {title}: {summary}\n\n"
+                merged_content += f"\t{title}: {summary}\n\n"
 
         # Create the Breaking News entry
         breaking_news = {
             "date": formatted_date,
             "category": "Breaking News",
             "title": "Tổng hợp tin tức hôm nay",
-            "content": merged_content.strip(),
+            "content": merged_content.rstrip(),
         }
 
         return JSONResponse(content=breaking_news)
