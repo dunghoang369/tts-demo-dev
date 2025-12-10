@@ -17,7 +17,7 @@ function ProtectedRoute({ children, requiredRole }) {
   // If premium access is required and user doesn't have premium role, show toast and redirect
   useEffect(() => {
     if (requiredRole === 'premium' && user?.role !== 'premium' && !hasShownToast.current) {
-      showToast('You are not allowed to access this page', 'error', 4000);
+      showToast('Bạn không có quyền truy cập trang này, vui lòng liên hệ admin để được cấp quyền', 'error', 4000);
       hasShownToast.current = true;
     }
   }, [requiredRole, user?.role, showToast]);
