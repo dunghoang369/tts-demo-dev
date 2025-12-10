@@ -4,6 +4,7 @@ import './LandingPage.css';
 
 function LandingPage() {
   const { user, logout } = useAuth();
+  const userRole = user?.role || 'standard';
 
   const handleLogout = async () => {
     if (window.confirm('Are you sure you want to logout?')) {
@@ -35,6 +36,7 @@ function LandingPage() {
         </div>
 
         <div className="services-grid">
+          {/* Available to all roles */}
           <Link to="/tts" className="service-card">
             <div className="service-icon">🎙️</div>
             <h3 className="service-title">Text to Speech</h3>
@@ -46,6 +48,7 @@ function LandingPage() {
             </div>
           </Link>
 
+          {/* Available to all roles */}
           <Link to="/summarize" className="service-card">
             <div className="service-icon">📝</div>
             <h3 className="service-title">Collect and Summarize the news</h3>
@@ -57,27 +60,33 @@ function LandingPage() {
             </div>
           </Link>
 
-          <Link to="/audio-tools" className="service-card">
-            <div className="service-icon">🎵</div>
-            <h3 className="service-title">Audio Tools</h3>
-            <p className="service-description">
-              Analyze and convert audio files with NetSpeech, SNR analysis, and audio converter
-            </p>
-            <div className="service-button">
-              Get Started →
-            </div>
-          </Link>
+          {/* Available to pro and premium roles only */}
+          {(userRole === 'pro' || userRole === 'premium') && (
+            <Link to="/audio-tools" className="service-card">
+              <div className="service-icon">🎵</div>
+              <h3 className="service-title">Audio Tools</h3>
+              <p className="service-description">
+                Analyze and convert audio files with NetSpeech, SNR analysis, and audio converter
+              </p>
+              <div className="service-button">
+                Get Started →
+              </div>
+            </Link>
+          )}
 
-          <Link to="/voice-clone" className="service-card">
-            <div className="service-icon">🎤</div>
-            <h3 className="service-title">Voice Clone</h3>
-            <p className="service-description">
-              Clone any voice by uploading reference audio and generate speech with that voice
-            </p>
-            <div className="service-button">
-              Get Started →
-            </div>
-          </Link>
+          {/* Available to premium role only */}
+          {userRole === 'premium' && (
+            <Link to="/voice-clone" className="service-card">
+              <div className="service-icon">🎤</div>
+              <h3 className="service-title">Voice Clone</h3>
+              <p className="service-description">
+                Clone any voice by uploading reference audio and generate speech with that voice
+              </p>
+              <div className="service-button">
+                Get Started →
+              </div>
+            </Link>
+          )}
         </div>
 
         <div className="features-section">

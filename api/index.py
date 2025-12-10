@@ -55,18 +55,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mock user databases
+# Mock user databases with role-based access control
 USERS = {
-    # "admin": "admin123",
-    # "demo": "demo123",
-    # "user": "password",
-    "namitech": "LT3kzk46e5Q6bqmK",
+    "namitech_standard": {"password": "LT3kzk46e5Q6bqmK", "role": "standard"},
+    "namitech_pro": {"password": "LT3kzk46e5Q6bqmM", "role": "pro"},
+    "namitech_premium": {"password": "LT3kzk46e5Q6bqmQ", "role": "premium"},
 }
 
 EMAIL_USERS = {
-    "admin@namisense.ai": "admin123",
-    "user@namisense.ai": "password123",
-    "demo@namisense.ai": "demo123",
+    "standard@namisense.ai": {"password": "standard123", "role": "standard"},
+    "pro@namisense.ai": {"password": "pro123", "role": "pro"},
+    "premium@namisense.ai": {"password": "premium123", "role": "premium"},
 }
 
 ALLOWED_DOMAIN = os.getenv("ALLOWED_DOMAIN", "namisense.ai")
@@ -459,6 +458,7 @@ class LoginRequest(BaseModel):
 class UserResponse(BaseModel):
     username: str
     email: Optional[str] = None
+    role: str = "standard"  # Default role
 
 
 class TokenResponse(BaseModel):
@@ -541,6 +541,7 @@ def verify_token(
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         email: Optional[str] = payload.get("email")
+        role: str = payload.get("role", "standard")
 
         if username is None:
             raise HTTPException(
@@ -549,7 +550,7 @@ def verify_token(
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        return {"username": username, "email": email}
+        return {"username": username, "email": email, "role": role}
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -585,18 +586,34 @@ async def login(request: LoginRequest):
                 detail=f"Only {ALLOWED_DOMAIN} email addresses are allowed",
             )
 
-        if identifier in EMAIL_USERS and EMAIL_USERS[identifier] == password:
-            # Extract username from email (part before @)
-            username = identifier.split("@")[0]
-            user_info = {"username": username, "email": identifier}
+        if identifier in EMAIL_USERS:
+            user_data = EMAIL_USERS[identifier]
+            if user_data["password"] == password:
+                # Extract username from email (part before @)
+                username = identifier.split("@")[0]
+                user_info = {
+                    "username": username,
+                    "email": identifier,
+                    "role": user_data["role"],
+                }
     else:
         # Username authentication
-        if identifier in USERS and USERS[identifier] == password:
-            user_info = {"username": identifier, "email": None}
+        if identifier in USERS:
+            user_data = USERS[identifier]
+            if user_data["password"] == password:
+                user_info = {
+                    "username": identifier,
+                    "email": None,
+                    "role": user_data["role"],
+                }
 
     if user_info:
-        # Create JWT token with user data
-        token_data = {"sub": user_info["username"], "email": user_info["email"]}
+        # Create JWT token with user data including role
+        token_data = {
+            "sub": user_info["username"],
+            "email": user_info["email"],
+            "role": user_info["role"],
+        }
         access_token = create_access_token(token_data)
 
         return TokenResponse(
