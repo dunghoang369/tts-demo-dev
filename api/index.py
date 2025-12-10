@@ -51,7 +51,8 @@ USERS = {
     # "admin": {"password": "admin123", "role": "premium"},
     # "demo": {"password": "demo123", "role": "standard"},
     # "user": {"password": "password", "role": "standard"},
-    "namitech": {"password": "LT3kzk46e5Q6bqmK", "role": "premium"},
+    "namitech-premium": {"password": "LT3kzk46e5Q6bqmK", "role": "premium"},
+    "namitech-standard": {"password": "LT3kzk46e5Q6bqmM", "role": "standard"},
 }
 
 EMAIL_USERS = {
