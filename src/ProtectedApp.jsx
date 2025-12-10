@@ -5,6 +5,7 @@ import TextToSpeech from './components/TextToSpeech';
 import TextSummarization from './components/TextSummarization';
 import LandingPage from './components/LandingPage';
 import AudioTools from './components/AudioTools';
+import VoiceClone from './components/VoiceClone';
 
 function ProtectedApp() {
   const { authenticated, loading, login } = useAuth();
@@ -36,6 +37,7 @@ function ProtectedApp() {
       <Route path="/tts" element={<TextToSpeech />} />
       <Route path="/summarize" element={<TextSummarization />} />
       <Route path="/audio-tools" element={<AudioTools />} />
+      <Route path="/voice-clone" element={<VoiceClone />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

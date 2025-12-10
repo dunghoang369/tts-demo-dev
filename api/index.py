@@ -1357,5 +1357,108 @@ async def audio_converter(request: Request):
         )
 
 
+@app.post("/api/audio/generate")
+async def audio_generate(
+    request: Request,
+    file: UploadFile = File(...),
+    gen_text: str = Form(...),
+    ref_lang: str = Form("vi"),
+    gen_lang: str = Form("vi"),
+    ref_text: Optional[str] = Form(None),
+    is_upload: bool = Form(True),
+    is_translation: bool = Form(False),
+):
+    """
+    Proxy to external voice cloning API
+    Generate audio with cloned voice from reference audio
+    """
+    try:
+        logger.info(f"Voice clone request - gen_text: {gen_text[:50]}...")
+        logger.info(f"Languages: ref_lang={ref_lang}, gen_lang={gen_lang}")
+
+        # Read file content
+        file_content = await file.read()
+        logger.info(f"File uploaded: {file.filename}, size: {len(file_content)} bytes")
+
+        # External voice cloning API URL
+        VOICE_CLONE_API_URL = "https://voiceclone-be.namitech.ai/audio/generate/"
+
+        # Get JWT token from external service
+        JWT_URL = "https://voiceclone-be.namitech.ai/token"
+        token_form_data = {"username": "demo", "password": "Namitech@2025"}
+
+        async with httpx.AsyncClient(timeout=300.0) as client:
+            # Get JWT token
+            token_response = await client.post(JWT_URL, data=token_form_data)
+            if token_response.status_code != 200:
+                logger.error(f"Failed to get JWT token: {token_response.status_code}")
+                return JSONResponse(
+                    status_code=500, content={"error": "Authentication failed"}
+                )
+
+            jwt_token = token_response.json()["access_token"]
+            logger.info("JWT token obtained successfully")
+
+            # Prepare form data for voice cloning
+            form_data = {
+                "gen_text": gen_text,
+                "ref_lang": ref_lang,
+                "gen_lang": gen_lang,
+                "is_upload": str(is_upload).lower(),
+                "is_translation": str(is_translation).lower(),
+            }
+
+            # Add optional ref_text if provided
+            if ref_text:
+                form_data["ref_text"] = ref_text
+                logger.info("Reference text provided")
+
+            # Prepare file for upload
+            files = {
+                "file": (
+                    file.filename,
+                    file_content,
+                    file.content_type or "audio/wav",
+                )
+            }
+
+            # Set authorization header
+            headers = {"Authorization": f"Bearer {jwt_token}"}
+
+            logger.info(f"Sending request to voice clone API: {VOICE_CLONE_API_URL}")
+
+            # Make request to voice cloning API
+            response = await client.post(
+                VOICE_CLONE_API_URL, data=form_data, files=files, headers=headers
+            )
+
+            logger.info(f"Voice clone API response status: {response.status_code}")
+
+            if response.status_code == 200:
+                # Return audio content directly
+                return Response(
+                    content=response.content,
+                    media_type="audio/wav",
+                    headers={
+                        "Content-Disposition": f'attachment; filename="voice_clone_{file.filename}"'
+                    },
+                )
+            else:
+                logger.error(f"Voice clone API error: {response.text}")
+                return JSONResponse(
+                    status_code=response.status_code,
+                    content={
+                        "error": "Voice clone generation failed",
+                        "details": response.text,
+                    },
+                )
+
+    except Exception as e:
+        logger.error(f"Voice clone proxy error: {type(e).__name__}: {e}")
+        return JSONResponse(
+            status_code=500, content={"error": "Proxy error", "message": str(e)}
+        )
+
+
 # Vercel serverless handler - Use ASGI interface directly
 app_handler = app

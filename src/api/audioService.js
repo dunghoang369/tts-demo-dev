@@ -98,3 +98,51 @@ export const sendToConverter = async (file, params = {}) => {
     throw error;
   }
 };
+
+/**
+ * Generate voice clone from reference audio and text
+ * @param {File} file - Reference audio file
+ * @param {Object} params - Voice clone parameters
+ * @param {string} params.gen_text - Text to generate with cloned voice (required)
+ * @param {string} params.ref_lang - Reference language: 'vi', 'en', 'ja' (default: 'vi')
+ * @param {string} params.gen_lang - Generation language: 'vi', 'en', 'ja' (default: 'vi')
+ * @param {string} params.ref_text - Optional reference text transcript
+ * @param {boolean} params.is_upload - Upload flag (default: true)
+ * @param {boolean} params.is_translation - Translation flag (default: false)
+ * @returns {Promise<Object>} - Generated audio URL and blob
+ */
+export const generateVoiceClone = async (file, params = {}) => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('gen_text', params.gen_text);
+    formData.append('ref_lang', params.ref_lang || 'vi');
+    formData.append('gen_lang', params.gen_lang || 'vi');
+    formData.append('is_upload', params.is_upload !== undefined ? params.is_upload : true);
+    formData.append('is_translation', params.is_translation || false);
+
+    // Add optional reference text if provided
+    if (params.ref_text) {
+      formData.append('ref_text', params.ref_text);
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/audio/generate`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Voice clone generation failed: ${errorText}`);
+    }
+
+    // Get audio blob from response
+    const audioBlob = await response.blob();
+    const audioUrl = URL.createObjectURL(audioBlob);
+
+    return { audioUrl, blob: audioBlob };
+  } catch (error) {
+    console.error('Voice Clone API error:', error);
+    throw error;
+  }
+};

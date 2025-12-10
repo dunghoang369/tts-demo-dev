@@ -67,6 +67,17 @@ function LandingPage() {
               Get Started →
             </div>
           </Link>
+
+          <Link to="/voice-clone" className="service-card">
+            <div className="service-icon">🎤</div>
+            <h3 className="service-title">Voice Clone</h3>
+            <p className="service-description">
+              Clone any voice by uploading reference audio and generate speech with that voice
+            </p>
+            <div className="service-button">
+              Get Started →
+            </div>
+          </Link>
         </div>
 
         <div className="features-section">
