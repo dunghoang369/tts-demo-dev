@@ -5,9 +5,9 @@ import './LandingPage.css';
 function LandingPage() {
   const { user, logout } = useAuth();
   const userRole = user?.role || 'standard';
-
+  
   const handleLogout = async () => {
-    if (window.confirm('Are you sure you want to logout?')) {
+    if (window.confirm('Bạn có chắc muốn đăng xuất?')) {
       await logout();
     }
   };
