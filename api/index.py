@@ -59,7 +59,7 @@ app.add_middleware(
 USERS = {
     "namitech_standard": {"password": "LT3kzk46e5Q6bqmK", "role": "standard"},
     "namitech_pro": {"password": "LT3kzk46e5Q6bqmM", "role": "pro"},
-    "namitech_premium": {"password": "LT3kzk46e5Q6bqmQ", "role": "premium"},
+    "namitech": {"password": "LT3kzk46e5Q6bqmK", "role": "premium"},
 }
 
 EMAIL_USERS = {
