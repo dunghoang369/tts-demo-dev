@@ -74,9 +74,33 @@ function VoiceClone() {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      
+      // Determine best supported MIME type for recording
+      let mimeType = '';
+      const supportedTypes = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/ogg;codecs=opus',
+        'audio/mp4',
+      ];
+      
+      for (const type of supportedTypes) {
+        if (MediaRecorder.isTypeSupported(type)) {
+          mimeType = type;
+          break;
+        }
+      }
+      
+      // Create MediaRecorder with detected MIME type
+      const options = mimeType ? { mimeType } : {};
+      const mediaRecorder = new MediaRecorder(stream, options);
       mediaRecorderRef.current = mediaRecorder;
+      
+      // Store the actual MIME type being used
+      mediaRecorderRef.current.recordedMimeType = mimeType || 'audio/webm';
       audioChunksRef.current = [];
+
+      console.log('Recording with MIME type:', mediaRecorderRef.current.recordedMimeType);
 
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -85,8 +109,12 @@ function VoiceClone() {
       };
 
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+        // Use the same MIME type that was used for recording
+        const recordedType = mediaRecorderRef.current.recordedMimeType || 'audio/webm';
+        const audioBlob = new Blob(audioChunksRef.current, { type: recordedType });
         setRecordedBlob(audioBlob);
+        
+        console.log('Recording stopped. Blob type:', recordedType, 'Blob size:', audioBlob.size);
         
         // Create preview URL
         const url = URL.createObjectURL(audioBlob);
@@ -167,10 +195,25 @@ function VoiceClone() {
       if (inputMode === 'upload') {
         fileToSend = selectedFile;
       } else {
-        // Convert recorded blob to File object
-        fileToSend = new File([recordedBlob], `recording_${Date.now()}.wav`, {
-          type: 'audio/wav'
+        // Convert recorded blob to File object with correct extension
+        const blobType = recordedBlob.type;
+        let extension = 'webm'; // default
+        
+        if (blobType.includes('webm')) {
+          extension = 'webm';
+        } else if (blobType.includes('ogg')) {
+          extension = 'ogg';
+        } else if (blobType.includes('mp4')) {
+          extension = 'mp4';
+        } else if (blobType.includes('wav')) {
+          extension = 'wav';
+        }
+        
+        fileToSend = new File([recordedBlob], `recording_${Date.now()}.${extension}`, {
+          type: blobType
         });
+        
+        console.log('Converted blob to file:', fileToSend.name, 'type:', fileToSend.type);
       }
 
       const params = {
