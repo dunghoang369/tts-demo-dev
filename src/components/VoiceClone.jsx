@@ -388,6 +388,7 @@ function VoiceClone() {
                       controls
                       src={recordedAudioUrl}
                       className="voice-clone-preview-player"
+                      preload="metadata"
                     >
                       Your browser does not support the audio element.
                     </audio>
@@ -505,6 +506,7 @@ function VoiceClone() {
                   src={generatedAudio.audioUrl}
                   className="voice-clone-audio-player"
                   key={generatedAudio.audioUrl}
+                  preload="metadata"
                 >
                   Your browser does not support the audio element.
                 </audio>
