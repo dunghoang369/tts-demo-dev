@@ -145,6 +145,55 @@
   filter: brightness(0.95);
 }
 
+/* Sample sentence instruction */
+.voice-clone-sample-instruction {
+  margin-bottom: 1.5rem;
+  padding: 1.25rem;
+  background: rgba(124, 92, 255, 0.08);
+  border: 1px solid rgba(124, 92, 255, 0.25);
+  border-radius: 10px;
+}
+
+.voice-clone-instruction-text {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--vc-text-color);
+}
+
+.voice-clone-sample-text {
+  padding: 1rem;
+  background: var(--vc-input-bg);
+  border-radius: 8px;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--vc-text-color);
+  border: 1px solid var(--vc-border-color);
+}
+
+/* Recording timer */
+.voice-clone-recording-timer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: rgba(231, 76, 60, 0.15);
+  border: 1px solid rgba(231, 76, 60, 0.4);
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #e74c3c;
+  animation: timerPulse 1s infinite;
+}
+
+@keyframes timerPulse {
+  0%, 100% { 
+    opacity: 1;
+  }
+  50% { 
+    opacity: 0.85;
+  }
+}
 
 .voice-clone-container {
   min-height: 100vh;

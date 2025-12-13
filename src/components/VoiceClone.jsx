@@ -20,8 +20,10 @@ function VoiceClone() {
   const [isRecording, setIsRecording] = useState(false);
   const [recordedBlob, setRecordedBlob] = useState(null);
   const [recordedAudioUrl, setRecordedAudioUrl] = useState(null);
+  const [recordingTime, setRecordingTime] = useState(0);
   const recorderRef = useRef(null);
   const streamRef = useRef(null);
+  const recordingIntervalRef = useRef(null);
   const [sampleRate, setSampleRate] = useState(48000);
 
   // Common state
@@ -105,7 +107,13 @@ function VoiceClone() {
 
       recorderRef.current.startRecording();
       setIsRecording(true);
+      setRecordingTime(0); // Reset timer
       setError(null);
+      
+      // Start timer interval
+      recordingIntervalRef.current = setInterval(() => {
+        setRecordingTime(prevTime => prevTime + 1);
+      }, 1000);
     } catch (err) {
       console.error('Error accessing microphone:', err);
       setError('Microphone access denied. Please allow microphone access to record.');
@@ -114,6 +122,12 @@ function VoiceClone() {
 
   const stopRecording = async () => {
     if (recorderRef.current && isRecording) {
+      // Clear timer interval
+      if (recordingIntervalRef.current) {
+        clearInterval(recordingIntervalRef.current);
+        recordingIntervalRef.current = null;
+      }
+      
       recorderRef.current.stopRecording(async () => {
         const audioBlob = recorderRef.current.getBlob();
         setRecordedBlob(audioBlob);
@@ -138,9 +152,19 @@ function VoiceClone() {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
     }
+    if (recordingIntervalRef.current) {
+      clearInterval(recordingIntervalRef.current);
+    }
     setRecordedBlob(null);
     setRecordedAudioUrl(null);
+    setRecordingTime(0);
     recorderRef.current = null;
+  };
+
+  const formatTime = (time) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = time % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   };
 
   // Upload mode functions
@@ -331,6 +355,17 @@ function VoiceClone() {
             ) : (
               // Record Mode
               <div className="voice-clone-recording-section">
+                {/* Sample sentence instruction */}
+                <div className="voice-clone-sample-instruction">
+                  <p className="voice-clone-instruction-text">
+                    Read the sentence below in about 8 - 10 seconds:
+                  </p>
+                  <div className="voice-clone-sample-text">
+                    Namibank xin kính chào qúy khách, Cảm ơn qúy khách đã gọi đến tổng đài chăm sóc khách 
+                    hàng của ngân hàng Nami. Em có thể hỗ trợ thông tin gì cho quý khách ạ?
+                  </div>
+                </div>
+                
                 <div className="voice-clone-recording-controls">
                   {!isRecording && !recordedBlob && (
                     <button
@@ -343,12 +378,17 @@ function VoiceClone() {
                   )}
                   
                   {isRecording && (
-                    <button
-                      className="voice-clone-record-button recording"
-                      onClick={stopRecording}
-                    >
-                      ⏹️ Stop Recording
-                    </button>
+                    <>
+                      <button
+                        className="voice-clone-record-button recording"
+                        onClick={stopRecording}
+                      >
+                        ⏹️ Stop Recording
+                      </button>
+                      <div className="voice-clone-recording-timer">
+                        Duration: {formatTime(recordingTime)}
+                      </div>
+                    </>
                   )}
                   
                   {recordedBlob && !isRecording && (
