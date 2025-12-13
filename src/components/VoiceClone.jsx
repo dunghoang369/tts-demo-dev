@@ -358,10 +358,10 @@ function VoiceClone() {
                 {/* Sample sentence instruction */}
                 <div className="voice-clone-sample-instruction">
                   <p className="voice-clone-instruction-text">
-                    Read the sentence below in about 8 - 10 seconds:
+                    Đọc câu sau trong khoảng 8 - 10 giây:
                   </p>
                   <div className="voice-clone-sample-text">
-                    Namibank xin kính chào qúy khách, Cảm ơn qúy khách đã gọi đến tổng đài chăm sóc khách 
+                    Namibank xin kính chào quý khách, Cảm ơn quý khách đã gọi đến tổng đài chăm sóc khách 
                     hàng của ngân hàng Nami. Em có thể hỗ trợ thông tin gì cho quý khách ạ?
                   </div>
                 </div>
