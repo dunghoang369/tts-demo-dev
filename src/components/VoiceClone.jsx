@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { generateVoiceClone } from '../api/audioService';
+import RecordRTC from 'recordrtc';
 import './VoiceClone.css';
 
 function VoiceClone() {
@@ -19,8 +20,9 @@ function VoiceClone() {
   const [isRecording, setIsRecording] = useState(false);
   const [recordedBlob, setRecordedBlob] = useState(null);
   const [recordedAudioUrl, setRecordedAudioUrl] = useState(null);
-  const mediaRecorderRef = useRef(null);
-  const audioChunksRef = useRef([]);
+  const recorderRef = useRef(null);
+  const streamRef = useRef(null);
+  const [sampleRate, setSampleRate] = useState(48000);
 
   // Common state
   const [refText, setRefText] = useState('');
@@ -43,8 +45,8 @@ function VoiceClone() {
   useEffect(() => {
     return () => {
       // Stop media stream tracks
-      if (mediaRecorderRef.current && mediaRecorderRef.current.stream) {
-        mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
       }
       // Revoke audio URL
       if (recordedAudioUrl) {
@@ -52,6 +54,21 @@ function VoiceClone() {
       }
     };
   }, [recordedAudioUrl]);
+
+  // Detect optimal sample rate
+  useEffect(() => {
+    const getSampleRate = async () => {
+      try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const maxSampleRate = audioContext.sampleRate;
+        setSampleRate(maxSampleRate);
+        audioContext.close();
+      } catch (error) {
+        console.error("Error AudioContext:", error);
+      }
+    };
+    getSampleRate();
+  }, []);
 
   // Handle mode change
   const handleModeChange = (mode) => {
@@ -73,58 +90,20 @@ function VoiceClone() {
   // Recording functions
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      
-      // Determine best supported MIME type for recording
-      let mimeType = '';
-      const supportedTypes = [
-        'audio/webm;codecs=opus',
-        'audio/webm',
-        'audio/ogg;codecs=opus',
-        'audio/mp4',
-      ];
-      
-      for (const type of supportedTypes) {
-        if (MediaRecorder.isTypeSupported(type)) {
-          mimeType = type;
-          break;
-        }
-      }
-      
-      // Create MediaRecorder with detected MIME type
-      const options = mimeType ? { mimeType } : {};
-      const mediaRecorder = new MediaRecorder(stream, options);
-      mediaRecorderRef.current = mediaRecorder;
-      
-      // Store the actual MIME type being used
-      mediaRecorderRef.current.recordedMimeType = mimeType || 'audio/webm';
-      audioChunksRef.current = [];
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: { noiseSuppression: false, echoCancellation: false } 
+      });
+      streamRef.current = stream;
 
-      console.log('Recording with MIME type:', mediaRecorderRef.current.recordedMimeType);
+      recorderRef.current = new RecordRTC(stream, {
+        type: 'audio',
+        mimeType: 'audio/wav',
+        sampleRate: sampleRate,
+        numberOfAudioChannels: 2,
+        recorderType: RecordRTC.StereoAudioRecorder,
+      });
 
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = () => {
-        // Use the same MIME type that was used for recording
-        const recordedType = mediaRecorderRef.current.recordedMimeType || 'audio/webm';
-        const audioBlob = new Blob(audioChunksRef.current, { type: recordedType });
-        setRecordedBlob(audioBlob);
-        
-        console.log('Recording stopped. Blob type:', recordedType, 'Blob size:', audioBlob.size);
-        
-        // Create preview URL
-        const url = URL.createObjectURL(audioBlob);
-        setRecordedAudioUrl(url);
-        
-        // Stop all tracks
-        stream.getTracks().forEach(track => track.stop());
-      };
-
-      mediaRecorder.start();
+      recorderRef.current.startRecording();
       setIsRecording(true);
       setError(null);
     } catch (err) {
@@ -133,9 +112,21 @@ function VoiceClone() {
     }
   };
 
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
+  const stopRecording = async () => {
+    if (recorderRef.current && isRecording) {
+      recorderRef.current.stopRecording(async () => {
+        const audioBlob = recorderRef.current.getBlob();
+        setRecordedBlob(audioBlob);
+        
+        const url = URL.createObjectURL(audioBlob);
+        setRecordedAudioUrl(url);
+        
+        // Stop stream tracks
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop());
+          streamRef.current = null;
+        }
+      });
       setIsRecording(false);
     }
   };
@@ -144,9 +135,12 @@ function VoiceClone() {
     if (recordedAudioUrl) {
       URL.revokeObjectURL(recordedAudioUrl);
     }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+    }
     setRecordedBlob(null);
     setRecordedAudioUrl(null);
-    audioChunksRef.current = [];
+    recorderRef.current = null;
   };
 
   // Upload mode functions
@@ -195,22 +189,9 @@ function VoiceClone() {
       if (inputMode === 'upload') {
         fileToSend = selectedFile;
       } else {
-        // Convert recorded blob to File object with correct extension
-        const blobType = recordedBlob.type;
-        let extension = 'webm'; // default
-        
-        if (blobType.includes('webm')) {
-          extension = 'webm';
-        } else if (blobType.includes('ogg')) {
-          extension = 'ogg';
-        } else if (blobType.includes('mp4')) {
-          extension = 'mp4';
-        } else if (blobType.includes('wav')) {
-          extension = 'wav';
-        }
-        
-        fileToSend = new File([recordedBlob], `recording_${Date.now()}.${extension}`, {
-          type: blobType
+        // Recording mode - always WAV format
+        fileToSend = new File([recordedBlob], `recording_${Date.now()}.wav`, {
+          type: 'audio/wav'
         });
         
         console.log('Converted blob to file:', fileToSend.name, 'type:', fileToSend.type);
