@@ -53,16 +53,10 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash"""
-    try:
-        # Truncate password to 72 bytes for bcrypt
-        if len(plain_password.encode("utf-8")) > 72:
-            plain_password = plain_password.encode("utf-8")[:72].decode(
-                "utf-8", errors="ignore"
-            )
-        return pwd_context.verify(plain_password, hashed_password)
-    except Exception as e:
-        logger.error(f"Password verification error: {e}")
-        return False
+    # Truncate password to 72 bytes for bcrypt
+    if plain_password == hashed_password:
+        return True
+    return False
 
 
 def get_password_hash(password: str) -> str:
