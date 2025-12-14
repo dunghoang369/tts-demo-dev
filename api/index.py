@@ -21,6 +21,7 @@ import httpx
 import firebase_admin
 from firebase_admin import credentials, firestore
 import logging
+from passlib.context import CryptContext
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -45,6 +46,36 @@ ACCESS_TOKEN_EXPIRE_HOURS = 24
 
 # Security
 security = HTTPBearer(auto_error=False)
+
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify a password against its hash"""
+    try:
+        # Truncate password to 72 bytes for bcrypt
+        if len(plain_password.encode("utf-8")) > 72:
+            plain_password = plain_password.encode("utf-8")[:72].decode(
+                "utf-8", errors="ignore"
+            )
+        return pwd_context.verify(plain_password, hashed_password)
+    except Exception as e:
+        logger.error(f"Password verification error: {e}")
+        return False
+
+
+def get_password_hash(password: str) -> str:
+    """Hash a password for storing"""
+    try:
+        # Truncate password to 72 bytes for bcrypt
+        if len(password.encode("utf-8")) > 72:
+            password = password.encode("utf-8")[:72].decode("utf-8", errors="ignore")
+        return pwd_context.hash(password)
+    except Exception as e:
+        logger.error(f"Password hashing error: {e}")
+        raise
+
 
 # CORS configuration - allow all origins for flexible deployment
 app.add_middleware(
@@ -82,6 +113,17 @@ def init_firebase():
         return _db
 
     try:
+        # Check if Firebase app is already initialized
+        try:
+            # If already initialized, just get the client
+            _db = firestore.client()
+            _firebase_initialized = True
+            logger.info("Firebase already initialized, using existing app")
+            return _db
+        except ValueError:
+            # Not initialized yet, proceed with initialization
+            pass
+
         # Option 1: Try to load credentials from environment variable
         firebase_creds_json = os.getenv("FIREBASE_CREDENTIALS_JSON")
 
@@ -125,7 +167,145 @@ def init_firebase():
         return _db
     except Exception as e:
         logger.error(f"Error initializing Firebase: {e}")
+        import traceback
+
+        logger.error(traceback.format_exc())
         return None
+
+
+async def migrate_users_to_firestore():
+    """One-time migration of hardcoded users to Firestore"""
+    db = init_firebase()
+    if not db:
+        logger.error("Cannot migrate users: Firebase not initialized")
+        return False
+
+    try:
+        logger.info("Starting user migration to Firestore...")
+        auth_collection = db.collection("authentication")
+        migrated_count = 0
+
+        # Migrate USERS (username-based)
+        for username, data in USERS.items():
+            try:
+                doc_ref = auth_collection.document(username)
+                doc_ref.set(
+                    {
+                        "username": username,
+                        "email": None,
+                        "password": get_password_hash(data["password"]),
+                        "role": data["role"],
+                        "created_at": datetime.now(timezone.utc).isoformat(),
+                        "last_login": None,
+                        "is_active": True,
+                    }
+                )
+                migrated_count += 1
+                logger.info(f"Migrated user: {username}")
+            except Exception as e:
+                logger.error(f"Error migrating user {username}: {e}")
+
+        # Migrate EMAIL_USERS (email-based)
+        for email, data in EMAIL_USERS.items():
+            try:
+                username = email.split("@")[0]  # Use email prefix as username
+                doc_ref = auth_collection.document(f"email_{username}")
+                doc_ref.set(
+                    {
+                        "username": username,
+                        "email": email,
+                        "password": get_password_hash(data["password"]),
+                        "role": data["role"],
+                        "created_at": datetime.now(timezone.utc).isoformat(),
+                        "last_login": None,
+                        "is_active": True,
+                    }
+                )
+                migrated_count += 1
+                logger.info(f"Migrated email user: {email}")
+            except Exception as e:
+                logger.error(f"Error migrating email user {email}: {e}")
+
+        logger.info(f"Successfully migrated {migrated_count} users to Firestore")
+        return True
+    except Exception as e:
+        logger.error(f"Error migrating users: {e}")
+        import traceback
+
+        logger.error(traceback.format_exc())
+        return False
+
+
+async def get_user_from_firestore(username: str = None, email: str = None):
+    """Get user from Firestore by username or email"""
+    db = init_firebase()
+    if not db:
+        return None
+
+    try:
+        auth_collection = db.collection("authentication")
+
+        if email:
+            # Query by email
+            query = (
+                auth_collection.where("email", "==", email)
+                .where("is_active", "==", True)
+                .limit(1)
+            )
+            docs = query.stream()
+            for doc in docs:
+                return doc.to_dict()
+        elif username:
+            # Query by username or document ID
+            doc_ref = auth_collection.document(username)
+            doc = doc_ref.get()
+            if doc.exists:
+                user_data = doc.to_dict()
+                if user_data.get("is_active", True):
+                    return user_data
+
+            # Also try email_{username} format
+            doc_ref = auth_collection.document(f"email_{username}")
+            doc = doc_ref.get()
+            if doc.exists:
+                user_data = doc.to_dict()
+                if user_data.get("is_active", True):
+                    return user_data
+
+        return None
+    except Exception as e:
+        logger.error(f"Error fetching user from Firestore: {e}")
+        return None
+
+
+async def update_last_login(username: str = None, email: str = None):
+    """Update user's last login timestamp"""
+    db = init_firebase()
+    if not db:
+        return
+
+    try:
+        auth_collection = db.collection("authentication")
+
+        if email:
+            query = auth_collection.where("email", "==", email).limit(1)
+            docs = query.stream()
+            for doc in docs:
+                doc.reference.update(
+                    {"last_login": datetime.now(timezone.utc).isoformat()}
+                )
+                return
+        elif username:
+            # Try both username formats
+            for doc_id in [username, f"email_{username}"]:
+                doc_ref = auth_collection.document(doc_id)
+                if doc_ref.get().exists:
+                    doc_ref.update(
+                        {"last_login": datetime.now(timezone.utc).isoformat()}
+                    )
+                    return
+    except Exception as e:
+        logger.error(f"Error updating last login: {e}")
 
 
 async def get_news_category():
@@ -565,6 +745,7 @@ async def login(request: LoginRequest):
     """
     Authenticate user and create JWT token.
     Accepts either username or email authentication.
+    Now uses Firestore for user data.
     """
     identifier = request.identifier
     password = request.password
@@ -575,58 +756,59 @@ async def login(request: LoginRequest):
             detail="Username/email and password required",
         )
 
-    user_info = None
-
-    # Check if identifier is an email (contains @)
+    # Fetch user from Firestore
+    user_data = None
     if "@" in identifier:
-        # Email authentication
+        # Email login - validate domain first
         if not validate_email_domain(identifier):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Only {ALLOWED_DOMAIN} email addresses are allowed",
             )
-
-        if identifier in EMAIL_USERS:
-            user_data = EMAIL_USERS[identifier]
-            if user_data["password"] == password:
-                # Extract username from email (part before @)
-                username = identifier.split("@")[0]
-                user_info = {
-                    "username": username,
-                    "email": identifier,
-                    "role": user_data["role"],
-                }
+        user_data = await get_user_from_firestore(email=identifier)
     else:
-        # Username authentication
-        if identifier in USERS:
-            user_data = USERS[identifier]
-            if user_data["password"] == password:
-                user_info = {
-                    "username": identifier,
-                    "email": None,
-                    "role": user_data["role"],
-                }
+        # Username login
+        user_data = await get_user_from_firestore(username=identifier)
 
-    if user_info:
-        # Create JWT token with user data including role
-        token_data = {
-            "sub": user_info["username"],
-            "email": user_info["email"],
-            "role": user_info["role"],
-        }
-        access_token = create_access_token(token_data)
-
-        return TokenResponse(
-            success=True,
-            access_token=access_token,
-            token_type="bearer",
-            user=UserResponse(**user_info),
-        )
-    else:
+    if not user_data:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials",
         )
+
+    # Verify password
+    if not verify_password(password, user_data["password"]):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials",
+        )
+
+    # Update last login
+    await update_last_login(
+        username=user_data.get("username"), email=user_data.get("email")
+    )
+
+    # Create user info for response
+    user_info = {
+        "username": user_data["username"],
+        "email": user_data.get("email"),
+        "role": user_data["role"],
+    }
+
+    # Create JWT token with user data including role
+    token_data = {
+        "sub": user_info["username"],
+        "email": user_info["email"],
+        "role": user_info["role"],
+    }
+    access_token = create_access_token(token_data)
+
+    return TokenResponse(
+        success=True,
+        access_token=access_token,
+        token_type="bearer",
+        user=UserResponse(**user_info),
+    )
 
 
 @app.post("/api/logout", response_model=LogoutResponse)
@@ -636,6 +818,49 @@ async def logout():
     Returns success as token management is handled by client.
     """
     return LogoutResponse(success=True)
+
+
+@app.post("/api/admin/migrate-users")
+async def admin_migrate_users():
+    """Admin endpoint to migrate hardcoded users to Firestore (one-time use)"""
+    success = await migrate_users_to_firestore()
+    if success:
+        return {"message": "Users migrated successfully", "status": "success"}
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to migrate users",
+        )
+
+
+@app.get("/api/admin/list-users")
+async def admin_list_users():
+    """Admin endpoint to list users from Firestore"""
+    db = init_firebase()
+    if not db:
+        return {"error": "Firebase not initialized", "users": []}
+
+    try:
+        auth_collection = db.collection("authentication")
+        docs = auth_collection.stream()
+
+        users = []
+        for doc in docs:
+            data = doc.to_dict()
+            users.append(
+                {
+                    "id": doc.id,
+                    "username": data.get("username"),
+                    "email": data.get("email"),
+                    "role": data.get("role"),
+                    "is_active": data.get("is_active"),
+                }
+            )
+
+        return {"users": users, "count": len(users)}
+    except Exception as e:
+        logger.error(f"Error listing users: {e}")
+        return {"error": str(e), "users": []}
 
 
 @app.get("/api/session", response_model=SessionResponse)
