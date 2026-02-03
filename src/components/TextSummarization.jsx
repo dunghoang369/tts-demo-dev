@@ -27,7 +27,7 @@ function TextSummarization() {
   const handleSynthesize = async (text) => {
     try {
       setIsLoading(true);
-      const result = await synthesize(text, voice, model, rate, returnType, audioFormat, maxWordPerSent);
+      const result = await synthesize(text, voice, model, rate, returnType, audioFormat, maxWordPerSent, true);
       
       return result.audioUrl;
     } catch (error) {

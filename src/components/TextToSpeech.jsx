@@ -23,7 +23,7 @@ function TextToSpeech() {
     try {
       setIsLoading(true);
       console.log('Starting TTS synthesis...');
-      const result = await synthesize(text, voice, model, rate, returnType, audioFormat, maxWordPerSent);
+      const result = await synthesize(text, voice, model, rate, returnType, audioFormat, maxWordPerSent, false);
       
       console.log('TTS Result:', result);
       console.log('Normalized Text from result:', result.normalizedText);

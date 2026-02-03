@@ -10,10 +10,11 @@
  * @param {string} returnType - The return type (url or file)
  * @param {string} audioFormat - The audio format (wav or mp3)
  * @param {number} maxWordPerSent - Maximum words per sentence
+ * @param {boolean} enableCaching - Whether to enable caching (is_summary parameter)
  * @returns {Promise<{audioUrl: string, blob: Blob, normalizedText: string}>} - Audio URL, blob, and normalized text
  */
-export async function synthesize(text, voice, model, rate, returnType, audioFormat, maxWordPerSent) {
-  console.log('TTS API called with:', { text, voice, model, rate, returnType, audioFormat, maxWordPerSent });
+export async function synthesize(text, voice, model, rate, returnType, audioFormat, maxWordPerSent, enableCaching = true) {
+  console.log('TTS API called with:', { text, voice, model, rate, returnType, audioFormat, maxWordPerSent, enableCaching });
   
   // Use backend proxy instead of calling external API directly
   const API_URL = '/api/tts/synthesize';
@@ -26,7 +27,8 @@ export async function synthesize(text, voice, model, rate, returnType, audioForm
     accent: parseInt(voice) || 4,
     return_type: returnType || 'url',
     audio_format: audioFormat || 'wav',
-    max_word_per_sent: parseInt(maxWordPerSent) || 100
+    max_word_per_sent: parseInt(maxWordPerSent) || 100,
+    is_summary: enableCaching ? 1 : 0
   };
   
   console.log('Request body:', requestBody);
