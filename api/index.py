@@ -250,21 +250,15 @@ async def get_user_from_firestore(username: str = None, email: str = None):
             for doc in docs:
                 return doc.to_dict()
         elif username:
-            # Query by username or document ID
-            doc_ref = auth_collection.document(username)
-            doc = doc_ref.get()
-            if doc.exists:
-                user_data = doc.to_dict()
-                if user_data.get("is_active", True):
-                    return user_data
-
-            # Also try email_{username} format
-            doc_ref = auth_collection.document(f"email_{username}")
-            doc = doc_ref.get()
-            if doc.exists:
-                user_data = doc.to_dict()
-                if user_data.get("is_active", True):
-                    return user_data
+            # Query by username field
+            query = (
+                auth_collection.where("username", "==", username)
+                .where("is_active", "==", True)
+                .limit(1)
+            )
+            docs = query.stream()
+            for doc in docs:
+                return doc.to_dict()
 
         return None
     except Exception as e:
@@ -290,14 +284,13 @@ async def update_last_login(username: str = None, email: str = None):
                 )
                 return
         elif username:
-            # Try both username formats
-            for doc_id in [username, f"email_{username}"]:
-                doc_ref = auth_collection.document(doc_id)
-                if doc_ref.get().exists:
-                    doc_ref.update(
-                        {"last_login": datetime.now(timezone.utc).isoformat()}
-                    )
-                    return
+            query = auth_collection.where("username", "==", username).limit(1)
+            docs = query.stream()
+            for doc in docs:
+                doc.reference.update(
+                    {"last_login": datetime.now(timezone.utc).isoformat()}
+                )
+                return
     except Exception as e:
         logger.error(f"Error updating last login: {e}")
 
