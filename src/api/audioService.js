@@ -146,3 +146,41 @@ export const generateVoiceClone = async (file, params = {}) => {
     throw error;
   }
 };
+
+/**
+ * Generate voice clone using simple Vietnamese-only API
+ * @param {File} file - Reference audio file
+ * @param {string} text - Text to generate with cloned voice
+ * @returns {Promise<Object>} - Generated audio URL and blob
+ */
+export const generateVoiceCloneSimple = async (file, text) => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    // Add text as query parameter
+    const queryParams = new URLSearchParams({
+      text: text,
+      return_type: 'url'
+    });
+
+    const response = await fetch(`${API_BASE_URL}/api/audio/voice-clone-simple?${queryParams}`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Voice clone generation failed: ${errorText}`);
+    }
+
+    // Get audio blob from response
+    const audioBlob = await response.blob();
+    const audioUrl = URL.createObjectURL(audioBlob);
+
+    return { audioUrl, blob: audioBlob };
+  } catch (error) {
+    console.error('Voice Clone Simple API error:', error);
+    throw error;
+  }
+};

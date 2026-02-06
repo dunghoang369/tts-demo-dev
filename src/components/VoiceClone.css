@@ -39,6 +39,56 @@
   accent-color: var(--vc-accent-color);
 }
 
+/* Version Selector */
+.voice-clone-version-selector {
+  margin-bottom: 20px;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.voice-clone-version-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--vc-text-color);
+  margin-bottom: 10px;
+}
+
+.voice-clone-version-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.voice-clone-version-button {
+  flex: 1;
+  padding: 12px 20px;
+  border: 2px solid var(--vc-border-color);
+  background: var(--vc-input-bg);
+  color: var(--vc-text-color);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.voice-clone-version-button:hover:not(:disabled) {
+  border-color: var(--vc-accent-color);
+  background: var(--vc-panel-bg);
+}
+
+.voice-clone-version-button.active {
+  border-color: var(--vc-accent-color);
+  background: var(--vc-accent-color);
+  color: white;
+}
+
+.voice-clone-version-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .voice-clone-mode-option input[type="radio"]:disabled {
   cursor: not-allowed;
   opacity: 0.5;

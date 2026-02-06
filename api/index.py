@@ -7,6 +7,7 @@ from fastapi import (
     UploadFile,
     File,
     Form,
+    Query,
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
@@ -1699,6 +1700,87 @@ async def audio_generate(
 
     except Exception as e:
         logger.error(f"Voice clone proxy error: {type(e).__name__}: {e}")
+        return JSONResponse(
+            status_code=500, content={"error": "Proxy error", "message": str(e)}
+        )
+
+
+@app.post("/api/audio/voice-clone-simple")
+async def audio_voice_clone_simple(
+    file: UploadFile = File(...),
+    text: str = Query(...),
+    return_type: str = Query("url")
+):
+    """
+    Proxy to simple Vietnamese-only voice clone API
+    Simplified version with no JWT authentication needed
+    """
+    try:
+        logger.info(f"Simple voice clone request - text: {text[:50]}...")
+        
+        # Read file content
+        file_content = await file.read()
+        logger.info(f"File uploaded: {file.filename}, size: {len(file_content)} bytes")
+        
+        # Simple API URL
+        SIMPLE_API_URL = "http://115.79.192.192:19977/voice_clone"
+        API_KEY = "zNBVyiatKn5eTvC2CEvDg1msgOCHrTZ55zZ0qfsu"
+        
+        async with httpx.AsyncClient(timeout=300.0) as client:
+            # Prepare file for upload
+            files = {
+                "file": (
+                    file.filename,
+                    file_content,
+                    file.content_type or "audio/wav",
+                )
+            }
+            
+            # Query parameters
+            params = {
+                "return_type": return_type,
+                "text": text
+            }
+            
+            # Headers
+            headers = {
+                "accept": "application/json",
+                "api-key": API_KEY
+            }
+            
+            logger.info(f"Sending request to simple voice clone API: {SIMPLE_API_URL}")
+            
+            # Make request
+            response = await client.post(
+                SIMPLE_API_URL,
+                files=files,
+                params=params,
+                headers=headers
+            )
+            
+            logger.info(f"Simple voice clone API response status: {response.status_code}")
+            
+            if response.status_code == 200:
+                # Return audio content directly
+                return Response(
+                    content=response.content,
+                    media_type="audio/wav",
+                    headers={
+                        "Content-Disposition": f'attachment; filename="voice_clone_simple_{file.filename}"'
+                    },
+                )
+            else:
+                logger.error(f"Simple voice clone API error: {response.text}")
+                return JSONResponse(
+                    status_code=response.status_code,
+                    content={
+                        "error": "Voice clone generation failed",
+                        "details": response.text,
+                    },
+                )
+    
+    except Exception as e:
+        logger.error(f"Simple voice clone proxy error: {type(e).__name__}: {e}")
         return JSONResponse(
             status_code=500, content={"error": "Proxy error", "message": str(e)}
         )

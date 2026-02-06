@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { generateVoiceClone } from '../api/audioService';
+import { generateVoiceClone, generateVoiceCloneSimple } from '../api/audioService';
 import RecordRTC from 'recordrtc';
 import './VoiceClone.css';
 
@@ -11,6 +11,9 @@ function VoiceClone() {
 
   // Input mode state
   const [inputMode, setInputMode] = useState('upload'); // 'upload' or 'record'
+  
+  // Model version state
+  const [modelVersion, setModelVersion] = useState('big'); // 'big' or 'small'
 
   // Upload mode state
   const [selectedFile, setSelectedFile] = useState(null);
@@ -232,8 +235,16 @@ function VoiceClone() {
 
       console.log('Generating voice clone with params:', params);
       console.log('Input mode:', inputMode);
+      console.log('Model version:', modelVersion);
 
-      const result = await generateVoiceClone(fileToSend, params);
+      let result;
+      if (modelVersion === 'small') {
+        // Use simple API for small version (Vietnamese only)
+        result = await generateVoiceCloneSimple(fileToSend, genText);
+      } else {
+        // Use complex API for big version (multi-language)
+        result = await generateVoiceClone(fileToSend, params);
+      }
 
       setGeneratedAudio(result);
       console.log('Voice clone generated successfully');
@@ -293,6 +304,27 @@ function VoiceClone() {
             Clone any voice by uploading a reference audio file or recording your voice directly.
             For best results, provide a clear reference audio and its transcript.
           </p>
+        </div>
+
+        {/* Model Version Selector */}
+        <div className="voice-clone-version-selector">
+          <label className="voice-clone-version-label">Choose Model Version:</label>
+          <div className="voice-clone-version-buttons">
+            <button
+              className={`voice-clone-version-button ${modelVersion === 'big' ? 'active' : ''}`}
+              onClick={() => setModelVersion('big')}
+              disabled={loading}
+            >
+              Big Version (Multi-language)
+            </button>
+            <button
+              className={`voice-clone-version-button ${modelVersion === 'small' ? 'active' : ''}`}
+              onClick={() => setModelVersion('small')}
+              disabled={loading}
+            >
+              Small Version (Vietnamese Only)
+            </button>
+          </div>
         </div>
 
         <div className="voice-clone-form">
@@ -419,56 +451,60 @@ function VoiceClone() {
             )}
           </section>
 
-          {/* Reference Text (Optional) */}
-          <section className="voice-clone-section">
-            <h3 className="voice-clone-section-title">
-              2. Reference Text (Optional)
-              <span className="voice-clone-hint">Improves generation quality</span>
-            </h3>
-            <textarea
-              className="voice-clone-textarea"
-              placeholder="Enter the transcript of your reference audio here (optional, but recommended for better quality)..."
-              value={refText}
-              onChange={(e) => setRefText(e.target.value)}
-              rows={3}
-            />
-          </section>
+          {/* Reference Text (Optional) - Only for Big Version */}
+          {modelVersion === 'big' && (
+            <section className="voice-clone-section">
+              <h3 className="voice-clone-section-title">
+                2. Reference Text (Optional)
+                <span className="voice-clone-hint">Improves generation quality</span>
+              </h3>
+              <textarea
+                className="voice-clone-textarea"
+                placeholder="Enter the transcript of your reference audio here (optional, but recommended for better quality)..."
+                value={refText}
+                onChange={(e) => setRefText(e.target.value)}
+                rows={3}
+              />
+            </section>
+          )}
 
-          {/* Language Selection */}
-          <section className="voice-clone-section">
-            <h3 className="voice-clone-section-title">3. Language Settings *</h3>
-            <div className="voice-clone-language-grid">
-              <div className="voice-clone-input-group">
-                <label className="voice-clone-label">Reference Language:</label>
-                <select
-                  className="voice-clone-select"
-                  value={refLang}
-                  onChange={(e) => setRefLang(e.target.value)}
-                >
-                  <option value="vi">🇻🇳 Vietnamese</option>
-                  <option value="en">🇺🇸 English</option>
-                  <option value="ja">🇯🇵 Japanese</option>
-                </select>
-              </div>
+          {/* Language Selection - Only for Big Version */}
+          {modelVersion === 'big' && (
+            <section className="voice-clone-section">
+              <h3 className="voice-clone-section-title">3. Language Settings *</h3>
+              <div className="voice-clone-language-grid">
+                <div className="voice-clone-input-group">
+                  <label className="voice-clone-label">Reference Language:</label>
+                  <select
+                    className="voice-clone-select"
+                    value={refLang}
+                    onChange={(e) => setRefLang(e.target.value)}
+                  >
+                    <option value="vi">🇻🇳 Vietnamese</option>
+                    <option value="en">🇺🇸 English</option>
+                    <option value="ja">🇯🇵 Japanese</option>
+                  </select>
+                </div>
 
-              <div className="voice-clone-input-group">
-                <label className="voice-clone-label">Generation Language:</label>
-                <select
-                  className="voice-clone-select"
-                  value={genLang}
-                  onChange={(e) => setGenLang(e.target.value)}
-                >
-                  <option value="vi">🇻🇳 Vietnamese</option>
-                  <option value="en">🇺🇸 English</option>
-                  <option value="ja">🇯🇵 Japanese</option>
-                </select>
+                <div className="voice-clone-input-group">
+                  <label className="voice-clone-label">Generation Language:</label>
+                  <select
+                    className="voice-clone-select"
+                    value={genLang}
+                    onChange={(e) => setGenLang(e.target.value)}
+                  >
+                    <option value="vi">🇻🇳 Vietnamese</option>
+                    <option value="en">🇺🇸 English</option>
+                    <option value="ja">🇯🇵 Japanese</option>
+                  </select>
+                </div>
               </div>
-            </div>
-          </section>
+            </section>
+          )}
 
           {/* Generation Text */}
           <section className="voice-clone-section">
-            <h3 className="voice-clone-section-title">4. Text to Generate *</h3>
+            <h3 className="voice-clone-section-title">{modelVersion === 'big' ? '4' : '2'}. Text to Generate *</h3>
             <textarea
               className="voice-clone-textarea voice-clone-textarea-large"
               placeholder="Enter the text you want to generate with the cloned voice..."
