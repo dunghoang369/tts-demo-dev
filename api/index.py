@@ -1761,14 +1761,12 @@ async def audio_voice_clone_simple(
             logger.info(f"Simple voice clone API response status: {response.status_code}")
             
             if response.status_code == 200:
-                # Return audio content directly for inline playback
-                return Response(
-                    content=response.content,
-                    media_type="audio/wav",
-                    headers={
-                        "Content-Disposition": f'inline; filename="voice_clone_simple_{file.filename}"'
-                    },
-                )
+                # Parse JSON response and return it (contains base64 audio)
+                response_data = response.json()
+                logger.info(f"Simple voice clone API response keys: {response_data.keys()}")
+                
+                # Return the JSON response with audio field
+                return JSONResponse(content=response_data)
             else:
                 logger.error(f"Simple voice clone API error: {response.text}")
                 return JSONResponse(

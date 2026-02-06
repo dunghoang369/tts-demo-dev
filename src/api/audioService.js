@@ -174,8 +174,27 @@ export const generateVoiceCloneSimple = async (file, text) => {
       throw new Error(`Voice clone generation failed: ${errorText}`);
     }
 
-    // Get audio blob from response
-    const audioBlob = await response.blob();
+    // API returns JSON with base64-encoded audio
+    const data = await response.json();
+    console.log('Simple Voice Clone API Response:', data);
+
+    // Extract the base64 audio from the response
+    const base64Audio = data.audio;
+
+    if (!base64Audio) {
+      console.error('Response data:', data);
+      throw new Error('No audio data in response');
+    }
+
+    // Convert base64 to binary
+    const binaryString = atob(base64Audio);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+
+    // Create blob from binary data
+    const audioBlob = new Blob([bytes], { type: 'audio/wav' });
     const audioUrl = URL.createObjectURL(audioBlob);
 
     return { audioUrl, blob: audioBlob };
