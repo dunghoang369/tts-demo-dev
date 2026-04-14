@@ -7,6 +7,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
 dist
 dist-ssr
@@ -49,5 +50,29 @@ firebase-credentials.json
 # Helper scripts output
 get-firebase-env.txt
 
-# md files
+# Documentation (keep only README.md)
 *.md
+!README.md
+
+# Test scripts and outputs
+test_*.py
+test_*.wav
+test_*_output.*
+call_*.py
+response_*.json
+
+# Temporary audio files
+*.wav
+!public/*.wav
+
+# Temporary JSON data files (keep configs and public data)
+articles_news.json
+merged_articles.json
+summarized_news.json
+extracted_articles.txt
+
+# Keep these JSON files
+!package.json
+!package-lock.json
+!vercel.json
+!public/*.json
