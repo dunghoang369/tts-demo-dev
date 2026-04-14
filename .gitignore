@@ -49,6 +49,7 @@ firebase-credentials.json
 
 # Helper scripts output
 get-firebase-env.txt
+FIREBASE_SETUP_INSTRUCTIONS.txt
 
 # Documentation (keep only README.md)
 *.md
@@ -60,6 +61,7 @@ test_*.wav
 test_*_output.*
 call_*.py
 response_*.json
+retrieve_thoi_su.py
 
 # Temporary audio files
 *.wav
